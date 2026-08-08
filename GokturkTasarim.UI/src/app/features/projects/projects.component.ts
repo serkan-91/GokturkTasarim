@@ -1143,12 +1143,13 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  @HostListener('window:scroll', [])
+  onWindowScroll(): void {
+    this.checkScrollAndLoad();
+  }
+
   ngAfterViewInit(): void {
     this.initIntersectionObserver();
-
-    window.addEventListener('scroll', () => {
-      this.checkScrollAndLoad();
-    }, { passive: true });
   }
 
   ngOnDestroy(): void {
@@ -1160,12 +1161,21 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   private checkScrollAndLoad(): void {
     if (this.loadingMore || this.isCooldown) return;
 
-    const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-    const windowHeight = window.innerHeight;
-    const fullHeight = document.documentElement.scrollHeight;
+    const scrollPosition = Math.max(
+      window.pageYOffset || 0,
+      document.documentElement.scrollTop || 0,
+      document.body.scrollTop || 0
+    );
+
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    const fullHeight = Math.max(
+      document.body.scrollHeight || 0,
+      document.documentElement.scrollHeight || 0
+    );
 
     const distanceToBottom = fullHeight - (scrollPosition + windowHeight);
-    if (distanceToBottom <= 600) {
+
+    if (distanceToBottom <= 1000) {
       this.loadNextPage();
     }
   }
