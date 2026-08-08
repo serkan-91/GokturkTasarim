@@ -225,12 +225,43 @@ import { AuthService } from '../../core/services/auth.service';
                       <input type="text" class="modern-input" placeholder="4543 **** **** 1234" maxlength="19" [(ngModel)]="form.cardNumber" />
                     </div>
                     <div class="field-wrap">
-                      <label class="field-label">Son Kullanma Tarihi</label>
-                      <input type="text" class="modern-input" placeholder="AA / YY" maxlength="5" [(ngModel)]="form.cardExpiry" />
+                      <label class="field-label">Son Kullanma Tarihi *</label>
+                      <div class="expiry-dual-inputs">
+                        <input
+                          type="text"
+                          inputmode="numeric"
+                          class="modern-input text-center"
+                          placeholder="AA"
+                          maxlength="2"
+                          [(ngModel)]="form.cardMonth"
+                          (keydown)="onlyNumbers($event)"
+                          (input)="onNumericInput($event, 'cardMonth')"
+                        />
+                        <span class="expiry-slash">/</span>
+                        <input
+                          type="text"
+                          inputmode="numeric"
+                          class="modern-input text-center"
+                          placeholder="YY"
+                          maxlength="2"
+                          [(ngModel)]="form.cardYear"
+                          (keydown)="onlyNumbers($event)"
+                          (input)="onNumericInput($event, 'cardYear')"
+                        />
+                      </div>
                     </div>
                     <div class="field-wrap">
-                      <label class="field-label">CVC Güvenlik Kodu</label>
-                      <input type="password" class="modern-input" placeholder="***" maxlength="4" [(ngModel)]="form.cardCvc" />
+                      <label class="field-label">CVC Güvenlik Kodu *</label>
+                      <input
+                        type="password"
+                        inputmode="numeric"
+                        class="modern-input text-center"
+                        placeholder="***"
+                        maxlength="4"
+                        [(ngModel)]="form.cardCvc"
+                        (keydown)="onlyNumbers($event)"
+                        (input)="onNumericInput($event, 'cardCvc')"
+                      />
                     </div>
                   </div>
                 </div>
@@ -688,9 +719,18 @@ import { AuthService } from '../../core/services/auth.service';
       border: 1px dashed rgba(99,102,241,0.25);
     }
 
-    .amazon-action-bar {
-      display: flex; justify-content: flex-end; padding-top: 10px;
+    /* Dual Expiry Inputs */
+    .expiry-dual-inputs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    .expiry-slash {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--text-dim);
+    }
+    .text-center { text-align: center; }
   `]
 })
 export class CheckoutComponent {
@@ -737,10 +777,38 @@ export class CheckoutComponent {
     paymentMethod: 'CreditCard' as 'CreditCard' | 'BankTransfer' | 'CashOnDelivery',
     cardHolder: '',
     cardNumber: '',
-    cardExpiry: '',
+    cardMonth: '',
+    cardYear: '',
     cardCvc: '',
     notes: ''
   };
+
+  // Strictly allow ONLY numbers (0-9) and navigation keys (Backspace, Arrow keys, Tab, Delete)
+  onlyNumbers(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Enter'];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+    // Prevent non-digit characters including letters, slash, dot, minus etc.
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  // Sanitize input value to remove any non-digit character instantly
+  onNumericInput(event: Event, field: 'cardMonth' | 'cardYear' | 'cardCvc'): void {
+    const input = event.target as HTMLInputElement;
+    const cleanValue = input.value.replace(/\D/g, '');
+    input.value = cleanValue;
+
+    if (field === 'cardMonth') {
+      this.form.cardMonth = cleanValue;
+    } else if (field === 'cardYear') {
+      this.form.cardYear = cleanValue;
+    } else if (field === 'cardCvc') {
+      this.form.cardCvc = cleanValue;
+    }
+  }
 
   constructor() {
     if (this.authService.isLoggedIn()) {
