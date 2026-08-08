@@ -1,22 +1,14 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
-import { HomeComponent } from './features/home/home.component';
-import { LoginComponent } from './features/auth/login.component';
-import { AdminDashboardComponent } from './features/admin/admin-dashboard.component';
-import { CustomerDashboardComponent } from './features/customer/customer-dashboard.component';
-import { ProjectsComponent } from './features/projects/projects.component';
-import { SettingsComponent } from './features/settings/settings.component';
-import { AboutComponent } from './features/about/about.component';
-import { ContactComponent } from './features/contact/contact.component';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
-  // Unified Login Page for both Customer and Admin
+  // Unified Login Page for both Customer and Admin — lazy loaded
   {
     path: 'login',
-    component: LoginComponent,
+    loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent),
     canActivate: [guestGuard]
   },
 
@@ -25,24 +17,42 @@ export const routes: Routes = [
     path: '',
     component: MainLayoutComponent,
     children: [
-      { path: '', component: HomeComponent },
-      { path: 'dashboard', component: HomeComponent },
-      { path: 'projects', component: ProjectsComponent },
-      { path: 'settings', component: SettingsComponent },
-      { path: 'about', component: AboutComponent },
-      { path: 'contact', component: ContactComponent },
+      {
+        path: '',
+        loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent)
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent)
+      },
+      {
+        path: 'projects',
+        loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
+      },
+      {
+        path: 'about',
+        loadComponent: () => import('./features/about/about.component').then(m => m.AboutComponent)
+      },
+      {
+        path: 'contact',
+        loadComponent: () => import('./features/contact/contact.component').then(m => m.ContactComponent)
+      },
 
-      // Protected Customer Route
+      // Protected Customer Route — lazy loaded
       {
         path: 'customer',
-        component: CustomerDashboardComponent,
+        loadComponent: () => import('./features/customer/customer-dashboard.component').then(m => m.CustomerDashboardComponent),
         canActivate: [authGuard]
       },
 
-      // Dedicated Admin Route (Requires Admin Role)
+      // Dedicated Admin Route (Requires Admin Role) — lazy loaded
       {
         path: 'admin',
-        component: AdminDashboardComponent,
+        loadComponent: () => import('./features/admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
         canActivate: [adminGuard]
       },
 

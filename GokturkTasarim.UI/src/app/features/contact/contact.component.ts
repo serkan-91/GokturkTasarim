@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-contact',
@@ -168,8 +169,15 @@ import { FormsModule } from '@angular/forms';
                 placeholder="Projeniz hakkında detay verin; adet, boyut, malzeme tercihleri vb."></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">
-              <i class="fa-solid fa-paper-plane"></i> Mesaj Gönder
+            <!-- Error message from API -->
+            <div *ngIf="errorMsg" class="error-msg">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ errorMsg }}</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" [disabled]="loading">
+              <i class="fa-solid" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+              {{ loading ? 'Gönderiliyor...' : 'Mesaj Gönder' }}
             </button>
 
             <p class="form-note">
@@ -211,6 +219,20 @@ import { FormsModule } from '@angular/forms';
     </div>
   `,
   styles: [`
+    /* Error Msg */
+    .error-msg {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      color: var(--status-danger);
+      font-size: 0.86rem;
+    }
+
+    /* Contact Page Styles */
     .contact-page { display: flex; flex-direction: column; gap: 28px; }
 
     /* ── HERO ── */
@@ -569,7 +591,11 @@ import { FormsModule } from '@angular/forms';
   `]
 })
 export class ContactComponent {
+  private apiService = inject(ApiService);
+
   submitted = signal(false);
+  loading = false;
+  errorMsg = '';
 
   form = {
     name: '',
@@ -581,7 +607,25 @@ export class ContactComponent {
   };
 
   onSubmit() {
-    this.submitted.set(true);
-    this.form = { name: '', phone: '', email: '', company: '', service: '', message: '' };
+    if (!this.form.name || !this.form.email) return;
+
+    this.loading = true;
+    this.errorMsg = '';
+
+    this.apiService.submitContactForm(this.form).subscribe({
+      next: (res) => {
+        this.loading = false;
+        if (res.isSuccess !== false) {
+          this.submitted.set(true);
+          this.form = { name: '', phone: '', email: '', company: '', service: '', message: '' };
+        } else {
+          this.errorMsg = res.message || 'Gönderim başarısız. Lütfen tekrar deneyin.';
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.errorMsg = 'Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.';
+      }
+    });
   }
 }

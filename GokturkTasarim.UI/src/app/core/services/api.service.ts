@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, of } from 'rxjs';
-import { ApiHealthStatus, ApiResponse } from '../models/api-response.model';
+import { ApiHealthStatus, ApiResponse, ContactFormRequest, CustomerOrderDto, AdminRequestDto } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -35,6 +35,41 @@ export class ApiService {
         databaseConnected: false,
         serverTime: new Date().toISOString()
       }))
+    );
+  }
+
+  // Contact form submission
+  submitContactForm(form: ContactFormRequest): Observable<ApiResponse<null>> {
+    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/contact`, form).pipe(
+      catchError(() => of({
+        data: null,
+        isSuccess: false,
+        message: 'Bağlantı hatası. Lütfen daha sonra tekrar deneyin.',
+        timestamp: new Date().toISOString()
+      }))
+    );
+  }
+
+  // Customer orders
+  getCustomerOrders(): Observable<CustomerOrderDto[]> {
+    return this.http.get<CustomerOrderDto[]>(`${this.baseUrl}/customer/orders`, { withCredentials: true }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  // Admin requests
+  getAdminRequests(): Observable<AdminRequestDto[]> {
+    return this.http.get<AdminRequestDto[]>(`${this.baseUrl}/admin/requests`, { withCredentials: true }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  // Admin stats
+  getAdminStats(): Observable<{ totalCustomers: number; pendingRequests: number }> {
+    return this.http.get<{ totalCustomers: number; pendingRequests: number }>(
+      `${this.baseUrl}/admin/stats`, { withCredentials: true }
+    ).pipe(
+      catchError(() => of({ totalCustomers: 0, pendingRequests: 0 }))
     );
   }
 }

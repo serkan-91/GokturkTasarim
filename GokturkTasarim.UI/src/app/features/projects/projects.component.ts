@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface SubCategoryDto {
   id: string;
@@ -190,7 +191,7 @@ interface PagedProductsResponse {
             <div class="product-body">
               <span class="product-code">{{ product.productCode }}</span>
               <h4 class="product-title">{{ product.name }}</h4>
-              <p class="product-desc" [innerHTML]="product.description"></p>
+              <p class="product-desc" [innerHTML]="sanitize(product.description)"></p>
 
               <div class="product-footer" (click)="$event.stopPropagation()">
                 <div class="product-price-box">
@@ -287,7 +288,7 @@ interface PagedProductsResponse {
 
             <div class="modal-desc-box">
               <h4>Ürün Açıklaması & Özellikleri</h4>
-              <p [innerHTML]="prod.description"></p>
+              <p [innerHTML]="sanitize(prod.description)"></p>
             </div>
 
             <div class="modal-actions">
@@ -300,7 +301,7 @@ interface PagedProductsResponse {
               </button>
 
               <a
-                href="https://wa.me/905325182234?text=Merhaba,%20{{ prod.name }}%20hakkinda%20bilgi%20almak%20istiyorum."
+                [href]="getWhatsAppUrl(prod.name, prod.productCode)"
                 target="_blank"
                 class="btn-whatsapp-sm"
               >
@@ -356,7 +357,7 @@ interface PagedProductsResponse {
 
               <!-- Choice 3: WhatsApp Direct -->
               <a
-                [href]="'https://wa.me/905325182234?text=Merhaba,%20' + prod.name + '%20(' + prod.productCode + ')%20sipari%C5%9Fi%20vermek%20istiyorum.'"
+                [href]="getWhatsAppOrderUrl(prod.name, prod.productCode)"
                 target="_blank"
                 class="choice-card whatsapp-choice"
               >
@@ -1027,7 +1028,24 @@ interface PagedProductsResponse {
 export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private sanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
+
+  // Sanitize HTML to prevent XSS
+  sanitize(html: string | undefined): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html || '');
+  }
+
+  // Safe WhatsApp URL with proper encoding
+  getWhatsAppUrl(productName: string, productCode: string): string {
+    const text = encodeURIComponent(`Merhaba, ${productName} (${productCode}) hakkında bilgi almak istiyorum.`);
+    return `https://wa.me/905325182234?text=${text}`;
+  }
+
+  getWhatsAppOrderUrl(productName: string, productCode: string): string {
+    const text = encodeURIComponent(`Merhaba, ${productName} (${productCode}) siparişi vermek istiyorum.`);
+    return `https://wa.me/905325182234?text=${text}`;
+  }
 
   @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLDivElement>;
   private observer?: IntersectionObserver;

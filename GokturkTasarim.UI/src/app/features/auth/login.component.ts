@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
+// Only show demo credentials on localhost/development environments
+const isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -143,9 +146,9 @@ import { AuthService } from '../../core/services/auth.service';
           </a>
         </div>
 
-        <!-- Quick Demo Credentials Box -->
-        <div *ngIf="activeTab() === 'login'" class="quick-demo-box">
-          <span class="demo-title"><i class="fa-solid fa-key"></i> Hızlı Test Hesapları (.NET DB)</span>
+        <!-- Quick Demo Credentials Box — Only visible in development/localhost -->
+        <div *ngIf="activeTab() === 'login' && isDev" class="quick-demo-box">
+          <span class="demo-title"><i class="fa-solid fa-key"></i> Hızlı Test Hesapları (Yalnızca Geliştirme)</span>
           <div class="demo-buttons">
             <button class="btn-demo demo-admin" (click)="fillAdminCredentials()">
               <i class="fa-solid fa-user-shield"></i> Admin Girişi Doldur
@@ -155,8 +158,7 @@ import { AuthService } from '../../core/services/auth.service';
             </button>
           </div>
           <div class="demo-hint">
-            <small>Admin: admin&#64;gokturk.com (Şifre: Admin123!)</small><br/>
-            <small>Müşteri: musteri&#64;gokturk.com (Şifre: Musteri123!)</small>
+            <small><i class="fa-solid fa-triangle-exclamation"></i> Bu bölüm yalnızca geliştirme ortamında görünür.</small>
           </div>
         </div>
       </div>
@@ -400,6 +402,12 @@ export class LoginComponent {
   errorMessage = '';
   successMessage = '';
 
+  // Development-only flag — hides demo credentials in production
+  readonly isDev = isDevelopment;
+
+  // ReturnUrl after login
+  private returnUrl = '/';
+
   // Login Form
   email = '';
   password = '';
@@ -415,6 +423,9 @@ export class LoginComponent {
     this.route.queryParams.subscribe(params => {
       if (params['error'] === 'unauthorized') {
         this.errorMessage = 'Bu sayfaya erişim yetkiniz bulunmamaktadır. Lütfen Admin hesabınızla giriş yapınız.';
+      }
+      if (params['returnUrl']) {
+        this.returnUrl = params['returnUrl'];
       }
     });
   }
@@ -435,8 +446,12 @@ export class LoginComponent {
     this.errorMessage = '';
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => {
+      next: (user) => {
         this.loading = false;
+        // Navigate to returnUrl if available, otherwise role-based default
+        const defaultRoute = user.role === 'Admin' ? '/admin' : '/customer';
+        const target = this.returnUrl !== '/' ? this.returnUrl : defaultRoute;
+        this.router.navigateByUrl(target);
       },
       error: err => {
         this.loading = false;
@@ -475,13 +490,16 @@ export class LoginComponent {
     });
   }
 
+  // Development-only helpers — only callable from template when isDev is true
   fillAdminCredentials(): void {
+    if (!this.isDev) return;
     this.email = 'admin@gokturk.com';
     this.password = 'Admin123!';
     this.errorMessage = '';
   }
 
   fillCustomerCredentials(): void {
+    if (!this.isDev) return;
     this.email = 'musteri@gokturk.com';
     this.password = 'Musteri123!';
     this.errorMessage = '';

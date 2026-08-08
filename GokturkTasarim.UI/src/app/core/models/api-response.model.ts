@@ -13,3 +13,30 @@ export interface ApiHealthStatus {
   databaseConnected: boolean;
   serverTime: string;
 }
+
+export interface ContactFormRequest {
+  name: string;
+  phone?: string;
+  email: string;
+  company?: string;
+  service?: string;
+  message?: string;
+}
+
+export interface CustomerOrderDto {
+  id: string;
+  title: string;
+  code: string;
+  date: string;
+  status: string;
+  statusClass: string;
+}
+
+export interface AdminRequestDto {
+  id: string;
+  customer: string;
+  service: string;
+  date: string;
+  status: string;
+  statusClass: string;
+}

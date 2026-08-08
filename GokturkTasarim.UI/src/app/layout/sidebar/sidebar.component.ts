@@ -69,9 +69,9 @@ import { AuthService } from '../../core/services/auth.service';
             <span class="link-text">İletişim</span>
           </a>
 
-          <a routerLink="/projects" routerLinkActive="active" class="nav-item">
+          <a routerLink="/contact" routerLinkActive="active" class="nav-item">
             <i class="fa-solid fa-truck-fast"></i>
-            <span class="link-text">Kurye Hizmetleri</span>
+            <span class="link-text">Kurye & İletişim</span>
           </a>
         </div>
 

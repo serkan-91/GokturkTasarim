@@ -145,14 +145,14 @@ import { ApiHealthStatus } from '../../core/models/api-response.model';
             <div class="status-rows">
               <div class="status-row">
                 <span class="status-lbl">API Bağlantısı</span>
-                <span class="badge" [ngClass]="healthStatus?.status === 'Offline' ? 'badge-warning' : 'badge-success'">
+                <span class="badge" [ngClass]="!healthStatus ? 'badge-warning' : healthStatus.status === 'Offline' ? 'badge-warning' : 'badge-success'">
                   {{ healthStatus?.status || '...' }}
                 </span>
               </div>
               <div class="status-row">
                 <span class="status-lbl">Veritabanı</span>
-                <span class="badge" [ngClass]="healthStatus?.databaseConnected ? 'badge-success' : 'badge-warning'">
-                  {{ healthStatus?.databaseConnected ? 'Bağlı' : 'Bekliyor' }}
+                <span class="badge" [ngClass]="!healthStatus ? 'badge-warning' : healthStatus.databaseConnected ? 'badge-success' : 'badge-warning'">
+                  {{ !healthStatus ? '...' : healthStatus.databaseConnected ? 'Bağlı' : 'Bağlı Değil' }}
                 </span>
               </div>
               <div class="status-row">

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { FooterComponent } from '../footer/footer.component';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-main-layout',
@@ -11,7 +12,7 @@ import { FooterComponent } from '../footer/footer.component';
   imports: [CommonModule, RouterOutlet, HeaderComponent, SidebarComponent, FooterComponent],
   template: `
     <div class="layout-wrapper">
-      <app-header (toggleSidebar)="isSidebarCollapsed = !isSidebarCollapsed"></app-header>
+      <app-header (toggleSidebar)="toggleSidebar()"></app-header>
       <div class="layout-body">
         <app-sidebar [collapsed]="isSidebarCollapsed"></app-sidebar>
         <main class="main-content">
@@ -50,8 +51,30 @@ import { FooterComponent } from '../footer/footer.component';
       padding: 32px;
       flex: 1;
     }
+
+    @media (max-width: 768px) {
+      .content-container {
+        padding: 16px;
+      }
+    }
   `]
 })
 export class MainLayoutComponent {
+  private router = inject(Router);
   isSidebarCollapsed = false;
+
+  constructor() {
+    // Auto-close sidebar on mobile when route changes
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      if (window.innerWidth <= 768) {
+        this.isSidebarCollapsed = true;
+      }
+    });
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
 }
