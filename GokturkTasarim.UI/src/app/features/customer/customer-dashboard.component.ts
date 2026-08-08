@@ -357,8 +357,8 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
       color: #fff;
     }
 
-    /* ── Aşağıdaki eski customer-hero stil yerine geliyor ── */
-
+    /* Skeleton */
+    .skel-icon {
       width: 44px; height: 44px; border-radius: var(--radius-md);
       background: rgba(255,255,255,0.06);
       flex-shrink: 0;
