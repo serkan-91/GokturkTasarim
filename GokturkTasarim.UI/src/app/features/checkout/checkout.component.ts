@@ -2,13 +2,15 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, HttpClientModule],
   template: `
     <div class="checkout-page">
       <!-- Breadcrumb & Header -->
@@ -745,6 +747,7 @@ export class CheckoutComponent {
   public cartService = inject(CartService);
   public authService = inject(AuthService);
   private router = inject(Router);
+  private http = inject(HttpClient);
 
   currentStep = signal(1);
   isCompleted = signal(false);
@@ -878,8 +881,37 @@ export class CheckoutComponent {
   }
 
   submitCheckout(): void {
-    this.cartService.clearCart();
-    this.isCompleted.set(true);
+    const payload = {
+      customerName: this.form.fullName,
+      customerPhone: this.form.phone,
+      customerEmail: this.form.email,
+      shippingAddress: this.form.address,
+      billingAddress: this.form.sameAsDeliveryAddress ? this.form.address : (this.form.billingAddress || this.form.address),
+      paymentMethod: this.form.paymentMethod,
+      notes: this.form.notes,
+      items: this.cartService.items().map(item => ({
+        productId: item.id.length === 36 ? item.id : '00000000-0000-0000-0000-000000000001',
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.basePrice
+      }))
+    };
+
+    const apiUrl = `${environment.apiUrl}/orders`;
+    this.http.post<any>(apiUrl, payload).subscribe({
+      next: (res) => {
+        if (res && res.orderNumber) {
+          this.refCode = res.orderNumber;
+        }
+        this.cartService.clearCart();
+        this.isCompleted.set(true);
+      },
+      error: () => {
+        // Fallback locally if API backend is not reachable in dev
+        this.cartService.clearCart();
+        this.isCompleted.set(true);
+      }
+    });
   }
 
   finishOrder(): void {

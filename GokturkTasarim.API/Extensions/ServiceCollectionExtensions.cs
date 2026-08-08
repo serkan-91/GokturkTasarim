@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetProductsQuery).Assembly));
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+        services.AddScoped<Gokturk.Application.Common.Interfaces.INotificationService, Gokturk.Infrastructure.Services.NotificationService>();
         services.AddScoped<Gokturk.Application.Vendor.Abstractions.IVendorFeedParserService, Gokturk.Infrastructure.Vendor.VendorFeedParserService>();
         services.AddScoped<Gokturk.Application.Sales.Abstractions.IPaymentGatewayService, Gokturk.Infrastructure.Payments.PaymentGatewayService>();
         services.AddHostedService<Gokturk.Infrastructure.Vendor.PromojoySyncWorker>();

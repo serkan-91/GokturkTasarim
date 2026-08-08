@@ -63,6 +63,7 @@ public static class ApplicationBuilderExtensions
         app.MapCatalogEndpoints();
         app.MapVendorEndpoints();
         app.MapPaymentEndpoints();
+        app.MapOrderEndpoints();
 
         return app;
     }
