@@ -118,9 +118,31 @@ import { AuthService } from '../../core/services/auth.service';
                   <span>Fatura adresim teslimat adresimle aynı</span>
                 </label>
 
-                <div *ngIf="!form.sameAsDeliveryAddress" class="separate-billing-box animate-fadeIn">
-                  <label class="field-label">Resmi Fatura Adresi *</label>
-                  <textarea class="modern-input modern-textarea" rows="2" placeholder="Resmi fatura adresini buraya giriniz..." [(ngModel)]="form.billingAddress"></textarea>
+                <!-- Tam Teşekküllü Ayrı Fatura Bilgileri Paneli -->
+                <div *ngIf="!form.sameAsDeliveryAddress" class="separate-billing-box glass-card animate-fadeIn">
+                  <h4 class="amazon-subhead text-cyan"><i class="fa-solid fa-file-invoice"></i> Resmi Fatura & e-Fatura Bilgileri</h4>
+                  
+                  <div class="checkout-form-grid">
+                    <div class="field-wrap span-2">
+                      <label class="field-label">Fatura Kesilecek Şirket Unvanı / Ad Soyad *</label>
+                      <input type="text" class="modern-input" placeholder="Örn: Göktürk Tasarım Reklam San. Tic. Ltd. Şti." [(ngModel)]="form.billingCompanyName" />
+                    </div>
+
+                    <div class="field-wrap">
+                      <label class="field-label">Vergi Dairesi</label>
+                      <input type="text" class="modern-input" placeholder="Örn: Maslak Vergi Dairesi" [(ngModel)]="form.billingTaxOffice" />
+                    </div>
+
+                    <div class="field-wrap">
+                      <label class="field-label">Vergi No / T.C. Kimlik No *</label>
+                      <input type="text" class="modern-input" placeholder="10 haneli VKN veya 11 haneli TKN" maxlength="11" [(ngModel)]="form.billingTaxNumber" />
+                    </div>
+
+                    <div class="field-wrap span-2">
+                      <label class="field-label">Resmi Fatura Adresi *</label>
+                      <textarea class="modern-input modern-textarea" rows="2" placeholder="Faturanın gönderileceği / kayıtlı resmi adres..." [(ngModel)]="form.billingAddress"></textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -244,8 +266,10 @@ import { AuthService } from '../../core/services/auth.service';
                   <span>{{ form.address }}</span>
                 </div>
                 <div class="review-row">
-                  <span class="rev-lbl">Fatura Adresi:</span>
-                  <span>{{ form.sameAsDeliveryAddress ? 'Teslimat Adresi ile Aynı' : (form.billingAddress || form.address) }}</span>
+                  <span class="rev-lbl">Fatura Bilgisi:</span>
+                  <span>
+                    {{ form.sameAsDeliveryAddress ? 'Teslimat Adresi ve Bilgileri ile Aynı' : (form.billingCompanyName || form.fullName) + ' (' + (form.billingTaxNumber || 'TKN/VKN Belirtilmedi') + ') - ' + (form.billingAddress || form.address) }}
+                  </span>
                 </div>
                 <div class="review-row">
                   <span class="rev-lbl">Ödeme Yöntemi:</span>
@@ -667,6 +691,9 @@ export class CheckoutComponent {
     companyName: '',
     address: '',
     sameAsDeliveryAddress: true,
+    billingCompanyName: '',
+    billingTaxOffice: '',
+    billingTaxNumber: '',
     billingAddress: '',
     paymentMethod: 'CreditCard' as 'CreditCard' | 'BankTransfer' | 'CashOnDelivery',
     cardHolder: '',
