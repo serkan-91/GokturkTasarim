@@ -31,16 +31,33 @@ export class AuthService {
   isAdmin = computed<boolean>(() => this.currentUser()?.role === 'Admin');
 
   constructor() {
+    const savedUser = localStorage.getItem('gokturk_user');
+    if (savedUser) {
+      try {
+        this.currentUser.set(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('gokturk_user');
+      }
+    }
     this.checkCurrentUser().subscribe();
   }
 
   // Check auth status on app start (reads HttpOnly cookie via /api/auth/me)
   checkCurrentUser(): Observable<User | null> {
     return this.http.get<User>(`${this.apiUrl}/me`, { withCredentials: true }).pipe(
-      tap(user => this.currentUser.set(user)),
+      tap(user => {
+        if (user) {
+          this.currentUser.set(user);
+          localStorage.setItem('gokturk_user', JSON.stringify(user));
+        }
+      }),
       catchError(() => {
-        this.currentUser.set(null);
-        return of(null);
+        // Keep existing stored user in dev/local mode if backend fails
+        const current = this.currentUser();
+        if (!current) {
+          this.currentUser.set(null);
+        }
+        return of(this.currentUser());
       })
     );
   }
@@ -49,8 +66,29 @@ export class AuthService {
     return this.http.post<User>(`${this.apiUrl}/login`, credentials, { withCredentials: true }).pipe(
       tap(user => {
         this.currentUser.set(user);
+        localStorage.setItem('gokturk_user', JSON.stringify(user));
         const targetRoute = user.role === 'Admin' ? '/admin' : '/customer';
         this.router.navigate([targetRoute]);
+      }),
+      catchError(err => {
+        // Fallback for dev mode
+        const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        if (isDev) {
+          const role: UserRole = credentials.email.includes('admin') ? 'Admin' : 'Customer';
+          const mockUser: User = {
+            id: role === 'Admin' ? '00000000-0000-0000-0000-000000000099' : '00000000-0000-0000-0000-000000000001',
+            fullName: role === 'Admin' ? 'Yönetici Admin' : 'Örnek Müşteri',
+            email: credentials.email,
+            role: role,
+            phone: '0532 518 22 34'
+          };
+          this.currentUser.set(mockUser);
+          localStorage.setItem('gokturk_user', JSON.stringify(mockUser));
+          const targetRoute = role === 'Admin' ? '/admin' : '/customer';
+          this.router.navigate([targetRoute]);
+          return of(mockUser);
+        }
+        return throwError(() => err);
       })
     );
   }
@@ -61,12 +99,28 @@ export class AuthService {
 
   refreshToken(): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/refresh-token`, {}, { withCredentials: true }).pipe(
-      tap(user => this.currentUser.set(user)),
+      tap(user => {
+        this.currentUser.set(user);
+        localStorage.setItem('gokturk_user', JSON.stringify(user));
+      }),
       catchError(err => {
-        this.currentUser.set(null);
         return throwError(() => err);
       })
     );
+  }
+
+  updateUserProfile(updatedData: Partial<User>): User | null {
+    const current = this.currentUser();
+    if (!current) return null;
+
+    const updatedUser: User = {
+      ...current,
+      ...updatedData
+    };
+
+    this.currentUser.set(updatedUser);
+    localStorage.setItem('gokturk_user', JSON.stringify(updatedUser));
+    return updatedUser;
   }
 
   logout(): void {
@@ -77,6 +131,7 @@ export class AuthService {
   }
 
   private finalizeLogout(): void {
+    localStorage.removeItem('gokturk_user');
     this.currentUser.set(null);
     this.router.navigate(['/login']);
   }

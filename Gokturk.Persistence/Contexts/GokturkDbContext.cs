@@ -19,6 +19,8 @@ public class GokturkDbContext : DbContext, IGokturkDbContext
     public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
     public DbSet<PriceMatrix> PriceMatrices => Set<PriceMatrix>();
     public DbSet<LaminationType> LaminationTypes => Set<LaminationType>();
+    public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
 
     // 2. Production Context
     public DbSet<PrintFile> PrintFiles => Set<PrintFile>();

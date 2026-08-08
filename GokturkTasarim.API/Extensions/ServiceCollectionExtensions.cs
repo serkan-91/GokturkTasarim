@@ -59,7 +59,20 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddHttpClient();
+        services.AddMemoryCache();
+        services.AddOutputCache(options =>
+        {
+            options.AddBasePolicy(builder => builder.Expire(TimeSpan.FromMinutes(10)));
+            options.AddPolicy("CatalogCache", builder => builder.Expire(TimeSpan.FromMinutes(15)).Tag("catalog"));
+        });
+
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetProductsQuery).Assembly));
+        
+        // Background Queue Services
+        services.AddSingleton<BackgroundQueueService>();
+        services.AddSingleton<Gokturk.Application.Common.Interfaces.IBackgroundQueueService>(sp => sp.GetRequiredService<BackgroundQueueService>());
+        services.AddHostedService<BackgroundQueueWorker>();
+
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddScoped<Gokturk.Application.Common.Interfaces.INotificationService, Gokturk.Infrastructure.Services.NotificationService>();

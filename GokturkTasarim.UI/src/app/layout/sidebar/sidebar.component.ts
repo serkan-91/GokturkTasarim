@@ -37,8 +37,8 @@ import { AuthService } from '../../core/services/auth.service';
             </a>
           </ng-container>
 
-          <!-- Customer Nav -->
-          <ng-container *ngIf="authService.isLoggedIn()">
+          <!-- Customer Nav (sadece müşteri için, admin görmez) -->
+          <ng-container *ngIf="authService.isLoggedIn() && !authService.isAdmin()">
             <a routerLink="/customer" routerLinkActive="active" class="nav-item">
               <i class="fa-solid fa-user-check text-emerald"></i>
               <span class="link-text">Müşteri Panelim</span>

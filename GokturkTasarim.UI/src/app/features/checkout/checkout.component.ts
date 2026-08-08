@@ -6,6 +6,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
+import { CustomerOrderDto } from '../../core/models/api-response.model';
 
 @Component({
   selector: 'app-checkout',
@@ -26,8 +27,20 @@ import { environment } from '../../../environments/environment';
         </div>
       </div>
 
+      <!-- Admin Restriction Card -->
+      <div class="glass-card admin-restriction-card" *ngIf="authService.isAdmin()">
+        <div class="admin-rest-icon">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h3>Yönetici Hesabı İle Sipariş Verilemez</h3>
+        <p>Sistem yöneticisi rolü ile alışveriş yapılamaz veya sipariş oluşturulamaz. Müşteri siparişlerini incelemek ve yönetmek için lütfen Yetkili Admin Paneli'ni kullanın.</p>
+        <a routerLink="/admin" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-gauge-high"></i> Admin Paneline Dön
+        </a>
+      </div>
+
       <!-- Main Layout Grid -->
-      <div class="checkout-grid" *ngIf="cartService.itemCount() > 0">
+      <div class="checkout-grid" *ngIf="cartService.itemCount() > 0 && !authService.isAdmin()">
         
         <!-- LEFT COLUMN: AMAZON CHECKOUT STEPS -->
         <div class="wizard-column">
@@ -419,7 +432,7 @@ import { environment } from '../../../environments/environment';
       </div>
 
       <!-- Empty Cart State -->
-      <div *ngIf="cartService.itemCount() === 0" class="glass-card empty-checkout-card">
+      <div *ngIf="cartService.itemCount() === 0 && !authService.isAdmin()" class="glass-card empty-checkout-card">
         <i class="fa-solid fa-cart-arrow-down empty-ico"></i>
         <h3>Sepetinizde Henüz Ürün Bulunmuyor</h3>
         <p>Ödeme yapabilmek için katalogdan sipariş vermek istediğiniz ürünleri sepetinize ekleyin.</p>
@@ -600,6 +613,26 @@ import { environment } from '../../../environments/environment';
     /* Empty state */
     .empty-checkout-card { padding: 48px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
     .empty-ico { font-size: 3.5rem; color: var(--text-dim); }
+
+    /* Admin Restriction Card */
+    .admin-restriction-card {
+      padding: 56px 36px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(99,102,241,0.06) 100%);
+      border: 1px solid rgba(168,85,247,0.25);
+    }
+    .admin-rest-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(168,85,247,0.2); color: var(--accent-purple);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+    }
+    .admin-restriction-card h3 { font-size: 1.4rem; font-weight: 800; margin: 0; }
+    .admin-restriction-card p { max-width: 520px; font-size: 0.92rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
 
     .success-box { padding: 36px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
     .success-ico { font-size: 4rem; color: var(--status-success); }
@@ -880,7 +913,27 @@ export class CheckoutComponent {
     }
   }
 
+  saveOrderToLocalStore(orderCode: string, itemsTitle: string): void {
+    const newOrder: CustomerOrderDto = {
+      id: orderCode,
+      title: itemsTitle || 'Özel Reklam / Baskı Siparişi',
+      code: orderCode,
+      date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
+      status: 'Onay Bekliyor',
+      statusClass: 'badge-warning'
+    };
+
+    const currentOrders: CustomerOrderDto[] = JSON.parse(localStorage.getItem('gokturk_orders') || '[]');
+    if (!currentOrders.some(o => o.code === orderCode)) {
+      currentOrders.unshift(newOrder);
+      localStorage.setItem('gokturk_orders', JSON.stringify(currentOrders));
+    }
+  }
+
   submitCheckout(): void {
+    const itemsTitle = this.cartService.items().map(i => `${i.name} (${i.quantity} Adet)`).join(', ');
+    const orderCode = 'GKT-ORD-' + this.refCode;
+
     const payload = {
       customerName: this.form.fullName,
       customerPhone: this.form.phone,
@@ -900,14 +953,14 @@ export class CheckoutComponent {
     const apiUrl = `${environment.apiUrl}/orders`;
     this.http.post<any>(apiUrl, payload).subscribe({
       next: (res) => {
-        if (res && res.orderNumber) {
-          this.refCode = res.orderNumber;
-        }
+        const finalCode = (res && res.orderNumber) ? res.orderNumber : orderCode;
+        this.saveOrderToLocalStore(finalCode, itemsTitle);
         this.cartService.clearCart();
         this.isCompleted.set(true);
       },
       error: () => {
         // Fallback locally if API backend is not reachable in dev
+        this.saveOrderToLocalStore(orderCode, itemsTitle);
         this.cartService.clearCart();
         this.isCompleted.set(true);
       }
@@ -916,6 +969,10 @@ export class CheckoutComponent {
 
   finishOrder(): void {
     this.isCompleted.set(false);
-    this.router.navigate(['/']);
+    if (this.authService.isAdmin()) {
+      this.router.navigate(['/admin']);
+    } else {
+      this.router.navigate(['/customer']);
+    }
   }
 }

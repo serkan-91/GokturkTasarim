@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { ApiService } from '../../core/services/api.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { CartService } from '../../core/services/cart.service';
@@ -55,6 +56,7 @@ interface PagedProductsResponse {
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="catalog-layout">
+
 
       <!-- LEFT SIDEBAR: Category Navigation (DB Dynamic) -->
       <aside class="catalog-sidebar glass-card">
@@ -116,7 +118,7 @@ interface PagedProductsResponse {
       <!-- MAIN CONTENT -->
       <div class="catalog-main">
 
-        <!-- Search Bar with Clear Button -->
+        <!-- Search Bar with Clear Button & Admin XML Sync -->
         <div class="search-bar glass-card">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
           <input
@@ -129,24 +131,28 @@ interface PagedProductsResponse {
           <button *ngIf="searchQuery" class="clear-search-btn" (click)="clearSearch()" title="Aramayı Temizle">
             <i class="fa-solid fa-xmark"></i>
           </button>
+          <button
+            *ngIf="authService.isAdmin()"
+            (click)="triggerXmlSync()"
+            class="btn btn-primary btn-sm xml-sync-search-btn"
+            [disabled]="syncing"
+            title="XML Ürün Kataloğunu Senkronize Et"
+          >
+            <i class="fa-solid" [ngClass]="syncing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i>
+            {{ syncing ? 'Senkronize...' : 'XML Senkronize Et' }}
+          </button>
           <span *ngIf="products().length > 0" class="search-result-count">
             {{ totalCount() }} sonuç
           </span>
         </div>
 
-        <!-- Customer & Client Facing Promo Banner -->
-        <div class="promo-banner glass-card" *ngIf="activeCategory() === 'all' && !searchQuery">
+        <!-- Customer & Client Facing Promo Banner (Hidden for Admin) -->
+        <div class="promo-banner glass-card" *ngIf="activeCategory() === 'all' && !searchQuery && !authService.isAdmin()">
           <div class="promo-content">
             <span class="promo-tag"><i class="fa-solid fa-star"></i> ÜRETİM & BASKI ÇÖZÜMLERİ</span>
             <h2 class="promo-title">Siz isteyin, <span class="gradient-text">biz üretelim</span></h2>
             <p>Kartvizit, broşür, tabela ve kurumsal promosyon ürünlerinde yüksek baskı kalitesi ve aynı gün teslimat seçeneği.</p>
             <div class="promo-actions">
-              <!-- XML Sync button ONLY visible for Admin -->
-              <button *ngIf="authService.isAdmin()" (click)="triggerXmlSync()" class="btn btn-primary btn-sm" [disabled]="syncing">
-                <i class="fa-solid" [ngClass]="syncing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i>
-                {{ syncing ? 'Senkronize Ediliyor...' : 'XML Senkronize Et' }}
-              </button>
-
               <a href="https://wa.me/905325182234?text=Merhaba,%20%C3%B6zel%20bask%C4%B1%20teklifi%20almak%20istiyorum." target="_blank" class="btn btn-secondary btn-sm">
                 <i class="fa-solid fa-paper-plane"></i> Özel Teklif Al
               </a>
@@ -178,13 +184,29 @@ interface PagedProductsResponse {
             [class.out-of-stock]="!product.inStock"
             (click)="openProductModal(product)"
           >
-            <!-- Only show badge when OUT OF STOCK (Tükendi). No green noisy badge for in-stock! -->
-            <span *ngIf="!product.inStock" class="product-badge badge-out-stock">
+            <!-- Admin Stock Badge (Only visible to Admin) -->
+            <span *ngIf="authService.isAdmin()" class="product-badge admin-stock-badge">
+              <i class="fa-solid fa-boxes-stacked"></i> Stok: {{ product.stockQuantity != null ? product.stockQuantity : (product.inStock ? 'Var' : 0) }}
+            </span>
+
+            <!-- Customer Out of Stock Badge (Only visible to Customer when out of stock) -->
+            <span *ngIf="!authService.isAdmin() && !product.inStock" class="product-badge badge-out-stock">
               <i class="fa-solid fa-ban"></i> Tükendi
             </span>
 
             <!-- Product Image / Icon -->
             <div class="product-img-wrapper">
+              <!-- Customer Wishlist / Favorite Heart Button -->
+              <button
+                *ngIf="!authService.isAdmin()"
+                class="wishlist-toggle-btn"
+                [class.is-fav]="isFavorite(product.id)"
+                (click)="toggleFavorite(product, $event)"
+                [title]="isFavorite(product.id) ? 'Favorilerden Çıkar' : 'Favorilere Ekle'"
+              >
+                <i class="fa-solid fa-heart" [class.text-rose]="isFavorite(product.id)"></i>
+              </button>
+
               <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-img gt-blend-image" />
               <div *ngIf="!product.imageUrl" class="product-icon-fallback">
                 <i class="fa-solid fa-print"></i>
@@ -206,22 +228,33 @@ interface PagedProductsResponse {
                   <span class="price-unit" *ngIf="product.unit">/ {{ product.unit }}</span>
                 </div>
 
-                <!-- Order Button: Disabled when out of stock -->
-                <button
-                  *ngIf="product.inStock"
-                  (click)="onOrderClick(product); $event.stopPropagation()"
-                  class="btn btn-sm btn-primary"
-                >
-                  <i class="fa-solid" [ngClass]="product.basePrice > 0 ? 'fa-cart-plus' : 'fa-paper-plane'"></i>
-                  {{ product.basePrice > 0 ? 'Sipariş Ver' : 'Teklif Al' }}
-                </button>
+                <!-- Customer Order Buttons (Only for non-Admin) -->
+                <ng-container *ngIf="!authService.isAdmin()">
+                  <button
+                    *ngIf="product.inStock"
+                    (click)="onOrderClick(product); $event.stopPropagation()"
+                    class="btn btn-sm btn-primary"
+                  >
+                    <i class="fa-solid" [ngClass]="product.basePrice > 0 ? 'fa-cart-plus' : 'fa-paper-plane'"></i>
+                    {{ product.basePrice > 0 ? 'Sipariş Ver' : 'Teklif Al' }}
+                  </button>
 
+                  <button
+                    *ngIf="!product.inStock"
+                    disabled
+                    class="btn btn-sm btn-disabled"
+                  >
+                    <i class="fa-solid fa-ban"></i> Stokta Yok
+                  </button>
+                </ng-container>
+
+                <!-- Admin View-Only Button -->
                 <button
-                  *ngIf="!product.inStock"
-                  disabled
-                  class="btn btn-sm btn-disabled"
+                  *ngIf="authService.isAdmin()"
+                  (click)="openProductModal(product); $event.stopPropagation()"
+                  class="btn btn-sm btn-outline-purple"
                 >
-                  <i class="fa-solid fa-ban"></i> Stokta Yok
+                  <i class="fa-solid fa-eye"></i> İncele
                 </button>
               </div>
             </div>
@@ -282,9 +315,15 @@ interface PagedProductsResponse {
               <i class="fa-solid fa-print"></i>
             </div>
             <div class="modal-stock-status">
-              <span class="badge" [ngClass]="prod.inStock ? 'badge-in-stock' : 'badge-out-stock'">
+              <!-- Admin exact stock view -->
+              <span *ngIf="authService.isAdmin()" class="badge badge-purple-sm">
+                <i class="fa-solid fa-boxes-stacked"></i> Stok Miktarı: {{ prod.stockQuantity != null ? prod.stockQuantity : (prod.inStock ? 'Var' : 0) }} {{ prod.unit || '' }}
+              </span>
+
+              <!-- Customer availability view (no exact numbers) -->
+              <span *ngIf="!authService.isAdmin()" class="badge" [ngClass]="prod.inStock ? 'badge-in-stock' : 'badge-out-stock'">
                 <i [class]="prod.inStock ? 'fa-solid fa-check-circle' : 'fa-solid fa-ban'"></i>
-                {{ prod.inStock ? 'Stok Miktarı: ' + prod.stockQuantity : 'Tükendi' }}
+                {{ prod.inStock ? 'Stokta Var' : 'Stokta Yok' }}
               </span>
             </div>
           </div>
@@ -305,21 +344,31 @@ interface PagedProductsResponse {
             </div>
 
             <div class="modal-actions">
-              <button
-                *ngIf="prod.inStock"
-                (click)="closeProductModal(); onOrderClick(prod)"
-                class="btn btn-primary btn-lg"
-              >
-                <i class="fa-solid fa-cart-plus"></i> Sipariş Oluştur
-              </button>
+              <ng-container *ngIf="!authService.isAdmin()">
+                <button
+                  *ngIf="prod.inStock"
+                  (click)="closeProductModal(); onOrderClick(prod)"
+                  class="btn btn-primary btn-lg"
+                >
+                  <i class="fa-solid fa-cart-plus"></i> Sipariş Oluştur
+                </button>
 
-              <a
-                [href]="getWhatsAppUrl(prod.name, prod.productCode)"
-                target="_blank"
-                class="btn-whatsapp-sm"
+                <a
+                  [href]="getWhatsAppUrl(prod.name, prod.productCode)"
+                  target="_blank"
+                  class="btn-whatsapp-sm"
+                >
+                  <i class="fa-brands fa-whatsapp"></i> WhatsApp'tan Sor
+                </a>
+              </ng-container>
+
+              <button
+                *ngIf="authService.isAdmin()"
+                class="btn btn-secondary btn-lg"
+                (click)="closeProductModal()"
               >
-                <i class="fa-brands fa-whatsapp"></i> WhatsApp'tan Sor
-              </a>
+                <i class="fa-solid fa-xmark"></i> Kapat
+              </button>
             </div>
           </div>
         </div>
@@ -549,6 +598,59 @@ interface PagedProductsResponse {
       padding-bottom: 12px;
       border-bottom: 1px solid var(--glass-border);
     }
+
+    .admin-view-mode-banner {
+      grid-column: span 2;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(168,85,247,0.18) 0%, rgba(99,102,241,0.12) 100%);
+      border: 1px solid rgba(168,85,247,0.35);
+      color: var(--text-main);
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .admin-view-mode-banner i { font-size: 1.2rem; color: var(--accent-purple); }
+
+    .admin-stock-badge {
+      background: rgba(168, 85, 247, 0.2) !important;
+      color: var(--accent-purple) !important;
+      border: 1px solid rgba(168, 85, 247, 0.4) !important;
+      backdrop-filter: blur(8px);
+      font-weight: 800;
+    }
+
+    .badge-purple-sm {
+      background: rgba(168, 85, 247, 0.15) !important;
+      color: var(--accent-purple) !important;
+      border: 1px solid rgba(168, 85, 247, 0.3) !important;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .btn-outline-purple {
+      background: rgba(168,85,247,0.1) !important;
+      color: var(--accent-purple) !important;
+      border: 1px solid rgba(168,85,247,0.3) !important;
+      font-weight: 700;
+    }
+    .btn-outline-purple:hover {
+      background: rgba(168,85,247,0.22) !important;
+      border-color: var(--accent-purple) !important;
+    }
+
+    .xml-sync-search-btn {
+      margin-left: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      border-radius: var(--radius-md);
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+    .toast-x { margin-left: auto; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
 
     .category-nav { display: flex; flex-direction: column; gap: 4px; }
 
@@ -1083,6 +1185,24 @@ interface PagedProductsResponse {
     }
     .btn-whatsapp-sm:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,211,102,0.3); }
 
+    .wishlist-toggle-btn {
+      position: absolute; top: 10px; right: 10px; z-index: 5;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.5);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.05rem; transition: all 0.2s ease;
+    }
+    .wishlist-toggle-btn:hover {
+      background: rgba(244, 63, 94, 0.25); border-color: rgba(244, 63, 94, 0.5);
+      color: #f43f5e; transform: scale(1.15);
+    }
+    .wishlist-toggle-btn.is-fav {
+      background: rgba(244, 63, 94, 0.9); border-color: #f43f5e;
+      color: #fff; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4);
+    }
+    .wishlist-toggle-btn.is-fav .text-rose { color: #fff !important; }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   `]
@@ -1092,6 +1212,47 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
+  private apiService = inject(ApiService);
+
+  favoriteIds = signal<Set<string>>(new Set());
+
+  isFavorite(productId: string): boolean {
+    return this.favoriteIds().has(productId);
+  }
+
+  toggleFavorite(product: ProductDto, event: MouseEvent): void {
+    event.stopPropagation();
+    const current = new Set(this.favoriteIds());
+    const willAdd = !current.has(product.id);
+
+    if (willAdd) {
+      current.add(product.id);
+    } else {
+      current.delete(product.id);
+    }
+    this.favoriteIds.set(current);
+
+    // Sync localStorage for instant customer dashboard updates
+    const stored: any[] = JSON.parse(localStorage.getItem('gokturk_wishlist') || '[]');
+    if (willAdd) {
+      if (!stored.some(item => item.productId === product.id)) {
+        stored.push({
+          productId: product.id,
+          name: product.name,
+          productCode: product.productCode,
+          category: product.category,
+          basePrice: product.basePrice,
+          imageUrl: product.imageUrl
+        });
+      }
+      localStorage.setItem('gokturk_wishlist', JSON.stringify(stored));
+    } else {
+      const updated = stored.filter(item => item.productId !== product.id);
+      localStorage.setItem('gokturk_wishlist', JSON.stringify(updated));
+    }
+
+    this.apiService.toggleWishlist(product.id).subscribe();
+  }
 
   // Sanitize HTML to prevent XSS
   sanitize(html: string | undefined): SafeHtml {
@@ -1159,6 +1320,7 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadCategories();
+    this.loadInitialWishlist();
 
     // Read initial category from URL query parameters (e.g., /projects?category=tabela)
     this.route.queryParams.subscribe(params => {
@@ -1167,6 +1329,21 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.activeCategory.set(catFromUrl);
       }
       this.loadProducts();
+    });
+  }
+
+  private loadInitialWishlist(): void {
+    const stored: any[] = JSON.parse(localStorage.getItem('gokturk_wishlist') || '[]');
+    if (stored.length > 0) {
+      this.favoriteIds.set(new Set(stored.map(i => i.productId)));
+    }
+
+    this.apiService.getWishlist().subscribe(items => {
+      if (items && items.length > 0) {
+        const set = new Set(items.map((i: any) => i.productId));
+        this.favoriteIds.set(set);
+        localStorage.setItem('gokturk_wishlist', JSON.stringify(items));
+      }
     });
   }
 
@@ -1332,8 +1509,14 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public cartService = inject(CartService);
+  adminNoticeToast = signal<string | null>(null);
 
   onOrderClick(product: ProductDto): void {
+    if (this.authService.isAdmin()) {
+      this.adminNoticeToast.set('Yönetici hesabı ile sipariş verilemez. Lütfen müşteri hesabı kullanın.');
+      setTimeout(() => this.adminNoticeToast.set(null), 4000);
+      return;
+    }
     this.cartService.addItem({
       id: product.id,
       productCode: product.productCode,

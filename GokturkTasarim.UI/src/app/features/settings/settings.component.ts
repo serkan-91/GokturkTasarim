@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
@@ -743,7 +743,7 @@ import { ThemeService } from '../../core/services/theme.service';
     }
   `]
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   public authService = inject(AuthService);
   public themeService = inject(ThemeService);
 
@@ -772,6 +772,19 @@ export class SettingsComponent {
     billingAddress: 'Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul'
   };
 
+  ngOnInit(): void {
+    const user = this.authService.currentUser();
+    if (user) {
+      if (user.company) this.billingForm.companyName = user.company;
+      if (user.taxDept) this.billingForm.taxOffice = user.taxDept;
+      if (user.taxNo) this.billingForm.taxNumber = user.taxNo;
+      if (user.address) {
+        this.billingForm.billingAddress = user.address;
+        this.billingForm.deliveryAddress = user.address;
+      }
+    }
+  }
+
   getInitials(): string {
     const name = this.authService.currentUser()?.fullName || '';
     return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
@@ -793,6 +806,12 @@ export class SettingsComponent {
   }
 
   saveBillingDetails(): void {
+    this.authService.updateUserProfile({
+      company: this.billingForm.companyName,
+      taxDept: this.billingForm.taxOffice,
+      taxNo: this.billingForm.taxNumber,
+      address: this.billingForm.billingAddress || this.billingForm.deliveryAddress
+    });
     this.billingSaved = true;
     setTimeout(() => { this.billingSaved = false; }, 2500);
   }

@@ -10,7 +10,7 @@ import { ApiService } from '../../core/services/api.service';
   template: `
     <div class="contact-page">
 
-      <!-- ── HERO ──────────────────────────────── -->
+      <!-- ── HERO ── -->
       <div class="contact-hero glass-card">
         <div class="hero-bg-decor">
           <span class="dc dc1"></span>
@@ -18,11 +18,39 @@ import { ApiService } from '../../core/services/api.service';
         </div>
         <div class="hero-inner">
           <div class="hero-label">
-            <i class="fa-solid fa-envelope-open-text"></i> İletişim
+            <i class="fa-solid fa-headset"></i> Destek Merkezi
           </div>
-          <h1>Sizinle <span class="gradient-text">Tanışmak İstiyoruz</span></h1>
-          <p>Teklif almak, sipariş vermek ya da sadece bilgi edinmek için aşağıdaki kanallardan bize ulaşın. En geç 24 saat içinde geri döneceğiz.</p>
+          <h1>Size Nasıl <span class="gradient-text">Yardımcı Olabiliriz?</span></h1>
+          <p>Sipariş durumu, kargo, tasarım veya herhangi bir konuda bize ulaşın. En geç 24 saat içinde geri döneceğiz.</p>
         </div>
+      </div>
+
+      <!-- ── Hızlı İletişim Kanalları ── -->
+      <div class="channel-strip">
+        <a href="https://wa.me/905325182234?text=Merhaba,%20sipari%C5%9Fim%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="channel-card channel-wa">
+          <div class="ch-icon"><i class="fa-brands fa-whatsapp"></i></div>
+          <div class="ch-body">
+            <strong>WhatsApp</strong>
+            <span>Hızlı yanıt, anında destek</span>
+          </div>
+          <span class="ch-badge">Çevrimiçi</span>
+        </a>
+        <a href="tel:+905325182234" class="channel-card channel-phone">
+          <div class="ch-icon"><i class="fa-solid fa-phone"></i></div>
+          <div class="ch-body">
+            <strong>Telefon</strong>
+            <span>0 532 518 22 34</span>
+          </div>
+          <span class="ch-badge ch-badge-amber">09:00–18:00</span>
+        </a>
+        <a href="mailto:info@gokturktasarim.com" class="channel-card channel-mail">
+          <div class="ch-icon"><i class="fa-solid fa-envelope"></i></div>
+          <div class="ch-body">
+            <strong>E-Posta</strong>
+            <span>info&#64;gokturktasarim.com</span>
+          </div>
+          <span class="ch-badge ch-badge-purple">24 saat</span>
+        </a>
       </div>
 
       <!-- ── ANA İÇERİK ─────────────────────────── -->
@@ -234,6 +262,40 @@ import { ApiService } from '../../core/services/api.service';
 
     /* Contact Page Styles */
     .contact-page { display: flex; flex-direction: column; gap: 28px; }
+
+    /* ── Quick Channel Strip ── */
+    .channel-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 768px) { .channel-strip { grid-template-columns: 1fr; } }
+    .channel-card {
+      display: flex; align-items: center; gap: 14px; padding: 18px 20px;
+      border-radius: var(--radius-lg); text-decoration: none; border: 1.5px solid var(--glass-border);
+      transition: all 0.25s ease; position: relative; overflow: hidden;
+    }
+    .channel-card:hover { transform: translateY(-3px); }
+    .channel-wa { background: linear-gradient(135deg, rgba(37,211,102,0.12), rgba(18,140,126,0.06)); border-color: rgba(37,211,102,0.25); }
+    .channel-wa:hover { border-color: rgba(37,211,102,0.5); box-shadow: 0 8px 24px rgba(37,211,102,0.2); }
+    .channel-phone { background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(6,182,212,0.05)); border-color: rgba(6,182,212,0.25); }
+    .channel-phone:hover { border-color: rgba(6,182,212,0.5); box-shadow: 0 8px 24px rgba(6,182,212,0.2); }
+    .channel-mail { background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.05)); border-color: rgba(99,102,241,0.25); }
+    .channel-mail:hover { border-color: rgba(99,102,241,0.5); box-shadow: 0 8px 24px rgba(99,102,241,0.2); }
+    .ch-icon {
+      width: 44px; height: 44px; border-radius: var(--radius-md); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+    }
+    .channel-wa .ch-icon { background: rgba(37,211,102,0.18); color: #25D366; }
+    .channel-phone .ch-icon { background: rgba(6,182,212,0.18); color: var(--secondary); }
+    .channel-mail .ch-icon { background: rgba(99,102,241,0.18); color: var(--primary); }
+    .ch-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .ch-body strong { font-size: 0.92rem; font-weight: 800; color: var(--text-main); }
+    .ch-body span { font-size: 0.76rem; color: var(--text-muted); }
+    .ch-badge {
+      font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 99px;
+      background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3);
+      white-space: nowrap;
+    }
+    .ch-badge-amber { background: rgba(245,158,11,0.15); color: #f59e0b; border-color: rgba(245,158,11,0.3); }
+    .ch-badge-purple { background: rgba(99,102,241,0.15); color: var(--primary); border-color: rgba(99,102,241,0.3); }
+
 
     /* ── HERO ── */
     .contact-hero {

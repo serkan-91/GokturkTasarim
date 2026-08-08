@@ -6,6 +6,10 @@ export interface User {
   fullName: string;
   role: UserRole;
   phone?: string;
+  company?: string;
+  taxDept?: string;
+  taxNo?: string;
+  address?: string;
   token?: string;
   avatarUrl?: string;
 }

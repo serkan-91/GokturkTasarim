@@ -10,9 +10,9 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <!-- ── YÜZEN SEPET TETİKLEYİCİ PİLL (FLOATING CART TRIGGER) ─────────────────────────── -->
+    <!-- ── YÜZEN SEPET TETİKLEYİCİ PİLL (FLOATING CART TRIGGER - Sadece Müşteri / Misafir İçin) ─────────────────────────── -->
     <div
-      *ngIf="cartService.itemCount() > 0"
+      *ngIf="cartService.itemCount() > 0 && !authService.isAdmin()"
       class="floating-cart-pill animate-bounce-subtle"
       (click)="cartService.toggleDrawer()"
       title="Sipariş Sepetini Aç"
@@ -133,10 +133,21 @@ import { AuthService } from '../../core/services/auth.service';
 
         <!-- Checkout Actions -->
         <div class="checkout-actions">
-          <button class="btn btn-primary btn-lg checkout-btn" (click)="openCheckoutWizard()">
+          <div *ngIf="authService.isAdmin()" class="admin-cart-notice">
+            <i class="fa-solid fa-shield-halved text-purple"></i>
+            <span><strong>Yönetici Hesabı:</strong> Admin yetkisiyle sipariş verilemez. Lütfen müşteri hesabı kullanın.</span>
+          </div>
+
+          <button *ngIf="!authService.isAdmin()" class="btn btn-primary btn-lg checkout-btn" (click)="openCheckoutWizard()">
             <i class="fa-solid fa-arrow-right"></i> Ödeme ve Adres Adımına Geç
           </button>
+
+          <button *ngIf="authService.isAdmin()" class="btn btn-secondary btn-lg checkout-btn" routerLink="/admin" (click)="cartService.closeDrawer()">
+            <i class="fa-solid fa-user-shield"></i> Admin Paneline Dön
+          </button>
+
           <a
+            *ngIf="!authService.isAdmin()"
             [href]="getWhatsAppCartUrl()"
             target="_blank"
             class="btn-whatsapp-drawer"
@@ -584,6 +595,18 @@ import { AuthService } from '../../core/services/auth.service';
     .checkout-actions { display: flex; flex-direction: column; gap: 10px; }
     .checkout-btn { width: 100%; justify-content: center; }
 
+    .admin-cart-notice {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(168,85,247,0.12);
+      border: 1px solid rgba(168,85,247,0.3);
+      font-size: 0.8rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .btn-whatsapp-drawer {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       padding: 12px; border-radius: var(--radius-md);
@@ -726,10 +749,14 @@ export class CartDrawerComponent {
     cardCvc: ''
   };
 
-  private router = inject(Router);
+  public router = inject(Router);
 
   openCheckoutWizard(): void {
     this.cartService.closeDrawer();
+    if (this.authService.isAdmin()) {
+      this.router.navigate(['/admin']);
+      return;
+    }
     this.router.navigate(['/checkout']);
   }
 

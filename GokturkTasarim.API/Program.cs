@@ -22,6 +22,7 @@ app.UseGlobalExceptionHandler();
 app.UseScalarApiDocs();
 app.UseHttpsRedirection();
 app.UseCors("AllowAngularUI");
+app.UseOutputCache();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -49,6 +49,10 @@ export const routes: Routes = [
         path: 'checkout',
         loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent)
       },
+      {
+        path: 'legal',
+        loadComponent: () => import('./features/legal/legal.component').then(m => m.LegalComponent)
+      },
 
       // Protected Customer Route — lazy loaded
       {

@@ -30,6 +30,12 @@ export interface CustomerOrderDto {
   date: string;
   status: string;
   statusClass: string;
+  carrier?: string;
+  trackingNumber?: string;
+  shippingNote?: string;
+  shippedDate?: string;
+  cancellationReason?: string;
+  cancellationNote?: string;
 }
 
 export interface AdminRequestDto {
@@ -39,4 +45,33 @@ export interface AdminRequestDto {
   date: string;
   status: string;
   statusClass: string;
+  carrier?: string;
+  trackingNumber?: string;
+  shippingNote?: string;
+  shippedDate?: string;
+  cancellationReason?: string;
+  cancellationNote?: string;
+}
+
+export interface CargoMovementDto {
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  status: string;
+}
+
+export interface CargoTrackingResultDto {
+  carrier: string;
+  trackingNumber: string;
+  status: string;
+  statusText: string;
+  progressPercent: number;
+  currentStepIndex: number;
+  currentLocation: string;
+  estimatedDelivery: string;
+  lastUpdated: string;
+  isLiveApi: boolean;
+  isTestCode: boolean;
+  movements: CargoMovementDto[];
 }

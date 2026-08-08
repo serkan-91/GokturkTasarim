@@ -20,6 +20,7 @@ public static class CatalogEndpoints
             var categories = await mediator.Send(new GetCategoriesQuery());
             return Results.Ok(categories);
         })
+        .CacheOutput("CatalogCache")
         .WithName("GetCatalogCategories")
         .WithSummary("Get Main Categories and Subcategories Hierarchy from Database");
 
@@ -29,6 +30,7 @@ public static class CatalogEndpoints
             var result = await mediator.Send(new GetProductsQuery(category, search, page, pageSize));
             return Results.Ok(result);
         })
+        .CacheOutput("CatalogCache")
         .WithName("GetProductsCatalog")
         .WithSummary("Get Products from DB with Stock Priority & Infinite Scroll Pagination");
 

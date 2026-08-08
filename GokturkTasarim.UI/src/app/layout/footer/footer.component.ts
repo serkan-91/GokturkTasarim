@@ -145,11 +145,11 @@ import { RouterLink } from '@angular/router';
             © {{ currentYear }} Göktürk Reklam & Promosyon. Tüm Hakları Saklıdır.
           </span>
           <div class="footer-bottom-links">
-            <a routerLink="/about" class="bottom-link">Hakkımızda</a>
+            <a routerLink="/legal" [queryParams]="{tab: 'mss'}" class="bottom-link">Mesafeli Satış Sözleşmesi</a>
             <span class="divider">·</span>
-            <a routerLink="/contact" class="bottom-link">Gizlilik Politikası</a>
+            <a routerLink="/legal" [queryParams]="{tab: 'kvkk'}" class="bottom-link">KVKK Aydınlatma Metni</a>
             <span class="divider">·</span>
-            <a routerLink="/contact" class="bottom-link">Kullanım Koşulları</a>
+            <a routerLink="/legal" [queryParams]="{tab: 'terms'}" class="bottom-link">Gizlilik &amp; Çerez Politikası</a>
           </div>
           <div class="footer-cert">
             <span class="cert-badge">

@@ -83,5 +83,35 @@ public static class DbInitializer
         }
 
         await db.SaveChangesAsync();
+
+        // 4. Seed Sample Reviews if empty
+        if (!await db.ProductReviews.AnyAsync())
+        {
+            var firstProduct = await db.Products.FirstOrDefaultAsync();
+            if (firstProduct != null)
+            {
+                var reviews = new[]
+                {
+                    new ProductReview
+                    {
+                        ProductId = firstProduct.Id.ToString(),
+                        UserId = Guid.NewGuid(),
+                        CustomerName = "Ahmet Y.",
+                        Rating = 5,
+                        Comment = "Baskı kalitesi mükemmel! Kartvizitler 1 günde teslim edildi, çok memnun kaldım."
+                    },
+                    new ProductReview
+                    {
+                        ProductId = firstProduct.Id.ToString(),
+                        UserId = Guid.NewGuid(),
+                        CustomerName = "Selin K.",
+                        Rating = 4,
+                        Comment = "Selefon kalitesi çok iyi, paketleme özenliydi. Teşekkürler."
+                    }
+                };
+                await db.ProductReviews.AddRangeAsync(reviews);
+                await db.SaveChangesAsync();
+            }
+        }
     }
 }
