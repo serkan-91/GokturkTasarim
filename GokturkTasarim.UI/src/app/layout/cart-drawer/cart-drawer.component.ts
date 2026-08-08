@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -726,19 +726,11 @@ export class CartDrawerComponent {
     cardCvc: ''
   };
 
+  private router = inject(Router);
+
   openCheckoutWizard(): void {
-    // Auto fill if logged in
-    if (this.authService.isLoggedIn()) {
-      const u = this.authService.currentUser();
-      this.checkoutForm.fullName = u?.fullName || '';
-      this.checkoutForm.phone = u?.phone || '';
-      this.checkoutForm.address = 'Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul';
-      this.checkoutForm.companyName = 'Göktürk Tasarım Ltd. Şti.';
-      this.checkoutForm.taxNumber = '1920839412';
-    }
-    this.wizardStep.set(1);
-    this.showCheckoutWizard.set(true);
     this.cartService.closeDrawer();
+    this.router.navigate(['/checkout']);
   }
 
   closeCheckoutWizard(): void {
