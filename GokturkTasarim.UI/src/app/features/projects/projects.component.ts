@@ -1150,29 +1150,14 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   private checkScrollAndLoad(): void {
     if (this.loadingMore || this.isCooldown) return;
 
-    // Dynamic distance calculation for High-DPI / 4K monitors
     const scrollPosition = window.scrollY || document.documentElement.scrollTop;
     const windowHeight = window.innerHeight;
     const fullHeight = document.documentElement.scrollHeight;
 
-    // Dynamic threshold: at least 1000px OR 1.2x the window height (great for 4K displays)
-    const threshold = Math.max(1000, windowHeight * 1.2);
     const distanceToBottom = fullHeight - (scrollPosition + windowHeight);
-
-    if (distanceToBottom <= threshold) {
+    if (distanceToBottom <= 600) {
       this.loadNextPage();
     }
-  }
-
-  private autoFillViewportIfNeeded(): void {
-    // If user's screen is 4K/high-res and page height is smaller than screen, fetch next page automatically
-    setTimeout(() => {
-      if (document.documentElement.scrollHeight <= window.innerHeight + 400) {
-        if (this.hasNextPage() && !this.loadingMore && !this.isCooldown) {
-          this.loadNextPage();
-        }
-      }
-    }, 200);
   }
 
   private initIntersectionObserver(): void {
@@ -1249,7 +1234,6 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
         // 150ms cooldown after fetching a page
         setTimeout(() => {
           this.isCooldown = false;
-          this.autoFillViewportIfNeeded();
         }, 150);
       },
       error: () => {
