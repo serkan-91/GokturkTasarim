@@ -1115,23 +1115,28 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   private checkScrollAndLoad(): void {
     if (!this.hasNextPage() || this.loadingMore || this.isCooldown) return;
 
-    const distanceToBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-    if (distanceToBottom <= 100) {
+    // Distance to absolute bottom of window scroll
+    const scrollPosition = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const fullHeight = document.documentElement.scrollHeight;
+
+    const distanceToBottom = fullHeight - (scrollPosition + windowHeight);
+    if (distanceToBottom <= 400) {
       this.loadNextPage();
     }
   }
 
   private initIntersectionObserver(): void {
-    const rootEl = document.querySelector('.main-content');
+    // Set root: null so it observes against the window viewport
     const options: IntersectionObserverInit = {
-      root: rootEl || null,
-      rootMargin: '0px',
-      threshold: 0.9
+      root: null,
+      rootMargin: '200px',
+      threshold: 0.1
     };
 
     this.observer = new IntersectionObserver(([entry]) => {
       if (entry && entry.isIntersecting && !this.loadingMore && !this.isCooldown) {
-        this.checkScrollAndLoad();
+        this.loadNextPage();
       }
     }, options);
 
