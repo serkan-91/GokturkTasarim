@@ -191,22 +191,27 @@ import { RouterLink } from '@angular/router';
             </div>
           </div>
         </div>
+      </div>
 
-      <!-- ── ALT CTA BANNER ─────────────────────────── -->
+      <!-- ── ALT CTA BANNER (FULL WIDTH) ─────────────────────────── -->
       <div class="bottom-cta glass-card">
         <div class="bottom-cta-bg"></div>
         <div class="bottom-cta-content">
-          <div class="bottom-cta-icon"><i class="fa-solid fa-phone-volume"></i></div>
-          <div>
-            <h3>Projenizi Konuşalım</h3>
-            <p>Ücretsiz danışmanlık ve hızlı teklif için hemen iletişime geçin.</p>
+          <div class="cta-left">
+            <div class="bottom-cta-icon">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="cta-text">
+              <h3>Hayalinizdeki Projeyi Birlikte Hayata Geçirelim</h3>
+              <p>Özel ebat baskı, kurumsal matbaa veya kurye ihtiyaçlarınız için 7/24 hızlı fiyat teklifi alın.</p>
+            </div>
           </div>
           <div class="bottom-cta-actions">
-            <a href="tel:+905325182234" class="btn btn-primary">
+            <a href="tel:+905325182234" class="btn btn-primary cta-btn-phone">
               <i class="fa-solid fa-phone"></i> 0 532 518 22 34
             </a>
-            <a href="https://wa.me/905325182234?text=Merhaba,%20bilgi%20almak%20istiyorum." target="_blank" class="btn-whatsapp">
-              <i class="fa-brands fa-whatsapp"></i> WhatsApp
+            <a href="https://wa.me/905325182234?text=Merhaba,%20bilgi%20almak%20istiyorum." target="_blank" class="btn-whatsapp cta-btn-wa">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp'tan Fiyat Al
             </a>
           </div>
         </div>
@@ -708,57 +713,122 @@ import { RouterLink } from '@angular/router';
 
     .status-lbl { color: var(--text-muted); }
 
-    /* ── ALT CTA ── */
+    /* ── ALT CTA (FULL WIDTH) BANNER ── */
     .bottom-cta {
-      padding: 32px 40px;
+      padding: 36px 44px;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(6,182,212,0.1) 100%) !important;
-      border-color: var(--glass-border-hover) !important;
+      background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.12) 50%, rgba(6,182,212,0.1) 100%) !important;
+      border: 1px solid rgba(99,102,241,0.3) !important;
+      border-radius: var(--radius-xl);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+      margin-top: 12px;
     }
 
     .bottom-cta-bg {
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at 80% 50%, rgba(99,102,241,0.15), transparent 60%);
+      background: radial-gradient(circle at 90% 50%, rgba(168,85,247,0.2), transparent 70%);
       pointer-events: none;
     }
 
     .bottom-cta-content {
-      position: relative; z-index: 1;
-      display: flex; align-items: center; gap: 20px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .cta-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex: 1;
     }
 
     .bottom-cta-icon {
-      width: 56px; height: 56px;
-      border-radius: var(--radius-md);
-      background: rgba(99,102,241,0.2);
-      color: var(--primary);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; flex-shrink: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      flex-shrink: 0;
+      box-shadow: 0 8px 24px var(--primary-glow);
     }
 
-    .bottom-cta-content > div:nth-child(2) { flex: 1; }
-    .bottom-cta-content h3 { font-size: 1.1rem; margin-bottom: 4px; }
-    .bottom-cta-content p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+    .cta-text h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+      font-family: var(--font-heading);
+    }
 
-    .bottom-cta-actions { display: flex; gap: 12px; flex-shrink: 0; }
+    .cta-text p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .bottom-cta-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .cta-btn-phone {
+      padding: 12px 24px;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .cta-btn-wa {
+      padding: 12px 24px;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
 
     .btn-whatsapp {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px; border-radius: var(--radius-md);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--radius-md);
       background: linear-gradient(135deg, #25D366, #128C7E);
-      color: #fff; font-weight: 700; font-size: 0.9rem;
-      transition: transform 0.2s, box-shadow 0.2s;
+      color: #fff;
+      text-decoration: none;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
       box-shadow: 0 4px 16px rgba(37,211,102,0.25);
     }
 
     .btn-whatsapp:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(37,211,102,0.35);
+      box-shadow: 0 8px 24px rgba(37,211,102,0.38);
+      color: #fff;
     }
 
     /* ── RESPONSIVE ── */
+    @media (max-width: 992px) {
+      .bottom-cta-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+      .bottom-cta-actions {
+        width: 100%;
+      }
+      .bottom-cta-actions .btn, .bottom-cta-actions .btn-whatsapp {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
     @media (max-width: 768px) {
       .hero-section { min-height: 420px; }
       .hero-cta-overlay { padding: 28px 24px; }
@@ -767,9 +837,10 @@ import { RouterLink } from '@angular/router';
       .hero-cta-actions { flex-direction: column; }
       .hero-cta-actions .btn, .hero-cta-actions .btn-glass { width: 100%; justify-content: center; }
       .section-head-row { flex-direction: column; align-items: flex-start; }
-      .bottom-cta-content { flex-direction: column; text-align: center; }
-      .bottom-cta { padding: 24px; }
-      .bottom-cta-actions { width: 100%; flex-direction: column; }
+      .bottom-cta { padding: 28px 24px; }
+      .cta-left { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .bottom-cta-actions { flex-direction: column; width: 100%; }
+      .bottom-cta-actions .btn, .bottom-cta-actions .btn-whatsapp { width: 100%; }
     }
   `]
 })
