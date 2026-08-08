@@ -146,8 +146,6 @@ import { AuthService } from '../../core/services/auth.service';
                 </button>
               </div>
             </div>
-          </div>        </button>
-            </div>
           </div>
 
           <!-- STEP 2: ÖDEME YÖNTEMİ SEÇİMİ -->
