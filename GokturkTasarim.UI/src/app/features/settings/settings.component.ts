@@ -269,68 +269,91 @@ import { ThemeService } from '../../core/services/theme.service';
               </div>
             </div>
 
-            <form (ngSubmit)="saveBillingDetails()" class="billing-form-grid">
-              <!-- Müşteri Tipi Seçimi -->
-              <div class="form-group full-width">
-                <label class="info-label">Müşteri Tipi</label>
-                <div class="customer-type-toggle">
-                  <button
-                    type="button"
-                    class="type-btn"
-                    [class.active]="billingForm.customerType === 'Individual'"
-                    (click)="billingForm.customerType = 'Individual'"
-                  >
-                    <i class="fa-solid fa-user"></i> Bireysel (T.C. Kimlik)
-                  </button>
-                  <button
-                    type="button"
-                    class="type-btn"
-                    [class.active]="billingForm.customerType === 'Corporate'"
-                    (click)="billingForm.customerType = 'Corporate'"
-                  >
-                    <i class="fa-solid fa-building"></i> Kurumsal (Şirket)
-                  </button>
+            <form (ngSubmit)="saveBillingDetails()" class="billing-form-wrapper">
+              <!-- Müşteri Tipi Segmented Tab Switch -->
+              <div class="segmented-control">
+                <button
+                  type="button"
+                  class="segmented-tab"
+                  [class.active]="billingForm.customerType === 'Individual'"
+                  (click)="billingForm.customerType = 'Individual'"
+                >
+                  <i class="fa-solid fa-user-tie"></i>
+                  <span>Bireysel Müşteri (T.C. Kimlik)</span>
+                </button>
+                <button
+                  type="button"
+                  class="segmented-tab"
+                  [class.active]="billingForm.customerType === 'Corporate'"
+                  (click)="billingForm.customerType = 'Corporate'"
+                >
+                  <i class="fa-solid fa-building"></i>
+                  <span>Kurumsal Şirket (Vergi Dairesi & VKN)</span>
+                </button>
+              </div>
+
+              <!-- Form Alanları Grid -->
+              <div class="modern-form-grid">
+                <!-- Bireysel: TKN -->
+                <div class="field-group" *ngIf="billingForm.customerType === 'Individual'">
+                  <label class="field-label"><i class="fa-solid fa-id-card text-purple"></i> T.C. Kimlik Numarası</label>
+                  <div class="input-icon-wrap">
+                    <i class="fa-solid fa-fingerprint input-ico"></i>
+                    <input type="text" class="modern-input" placeholder="11 Haneli T.C. Kimlik No" maxlength="11" [(ngModel)]="billingForm.taxNumber" name="taxNumberInd" />
+                  </div>
+                </div>
+
+                <!-- Kurumsal: Vergi Dairesi & Vergi No -->
+                <ng-container *ngIf="billingForm.customerType === 'Corporate'">
+                  <div class="field-group span-2">
+                    <label class="field-label"><i class="fa-solid fa-building-flag text-purple"></i> Şirket / Resmi Fatura Unvanı</label>
+                    <div class="input-icon-wrap">
+                      <i class="fa-solid fa-signature input-ico"></i>
+                      <input type="text" class="modern-input" placeholder="Örn: Göktürk Tasarım Reklam ve Promosyon Ltd. Şti." [(ngModel)]="billingForm.companyName" name="companyName" />
+                    </div>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label"><i class="fa-solid fa-landmark text-amber"></i> Vergi Dairesi</label>
+                    <div class="input-icon-wrap">
+                      <i class="fa-solid fa-building-columns input-ico"></i>
+                      <input type="text" class="modern-input" placeholder="Örn: Maslak Vergi Dairesi" [(ngModel)]="billingForm.taxOffice" name="taxOffice" />
+                    </div>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label"><i class="fa-solid fa-hashtag text-cyan"></i> Vergi Numarası (VKN)</label>
+                    <div class="input-icon-wrap">
+                      <i class="fa-solid fa-barcode input-ico"></i>
+                      <input type="text" class="modern-input" placeholder="10 Haneli Vergi No" maxlength="10" [(ngModel)]="billingForm.taxNumber" name="taxNumberCorp" />
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- Teslimat Adresi -->
+                <div class="field-group span-2">
+                  <label class="field-label"><i class="fa-solid fa-truck-ramp-box text-emerald"></i> Varsayılan Teslimat Adresi (Kurye / Kargo)</label>
+                  <div class="input-icon-wrap textarea-wrap">
+                    <i class="fa-solid fa-location-dot input-ico"></i>
+                    <textarea class="modern-input modern-textarea" rows="3" placeholder="Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul" [(ngModel)]="billingForm.deliveryAddress" name="deliveryAddress"></textarea>
+                  </div>
+                </div>
+
+                <!-- Fatura Adresi -->
+                <div class="field-group span-2">
+                  <label class="field-label"><i class="fa-solid fa-receipt text-cyan"></i> Resmi Fatura Adresi</label>
+                  <div class="input-icon-wrap textarea-wrap">
+                    <i class="fa-solid fa-file-contract input-ico"></i>
+                    <textarea class="modern-input modern-textarea" rows="2" placeholder="Teslimat adresiyle aynı değilse fatura adresini buraya giriniz..." [(ngModel)]="billingForm.billingAddress" name="billingAddress"></textarea>
+                  </div>
                 </div>
               </div>
 
-              <!-- Bireysel: TKN -->
-              <div class="form-group" *ngIf="billingForm.customerType === 'Individual'">
-                <label class="info-label"><i class="fa-solid fa-id-card"></i> T.C. Kimlik No</label>
-                <input type="text" class="form-input" placeholder="11 haneli TKN" maxlength="11" [(ngModel)]="billingForm.taxNumber" name="taxNumberInd" />
-              </div>
-
-              <!-- Kurumsal: Vergi Dairesi & Vergi No -->
-              <ng-container *ngIf="billingForm.customerType === 'Corporate'">
-                <div class="form-group full-width">
-                  <label class="info-label"><i class="fa-solid fa-building-flag"></i> Şirket / Fatura Unvanı</label>
-                  <input type="text" class="form-input" placeholder="Göktürk Tasarım Reklam Ltd. Şti." [(ngModel)]="billingForm.companyName" name="companyName" />
-                </div>
-                <div class="form-group">
-                  <label class="info-label"><i class="fa-solid fa-landmark"></i> Vergi Dairesi</label>
-                  <input type="text" class="form-input" placeholder="Örn: Maslak V.D." [(ngModel)]="billingForm.taxOffice" name="taxOffice" />
-                </div>
-                <div class="form-group">
-                  <label class="info-label"><i class="fa-solid fa-hashtag"></i> Vergi Numarası</label>
-                  <input type="text" class="form-input" placeholder="10 haneli VKN" maxlength="10" [(ngModel)]="billingForm.taxNumber" name="taxNumberCorp" />
-                </div>
-              </ng-container>
-
-              <!-- Teslimat Adresi -->
-              <div class="form-group full-width">
-                <label class="info-label"><i class="fa-solid fa-truck-ramp-box"></i> Teslimat Adresi (Kurye / Kargo)</label>
-                <textarea class="form-input" rows="2" placeholder="Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul" [(ngModel)]="billingForm.deliveryAddress" name="deliveryAddress"></textarea>
-              </div>
-
-              <!-- Fatura Adresi -->
-              <div class="form-group full-width">
-                <label class="info-label"><i class="fa-solid fa-receipt"></i> Fatura Adresi</label>
-                <textarea class="form-input" rows="2" placeholder="Teslimat adresiyle aynı değilse giriniz..." [(ngModel)]="billingForm.billingAddress" name="billingAddress"></textarea>
-              </div>
-
-              <div class="form-group full-width">
-                <button type="submit" class="btn btn-primary btn-save">
-                  <i class="fa-solid" [ngClass]="billingSaved ? 'fa-check' : 'fa-floppy-disk'"></i>
-                  {{ billingSaved ? 'Fatura Bilgileri Kaydedildi!' : 'Fatura & Adres Bilgilerini Kaydet' }}
+              <!-- Alt Aksiyon Barı -->
+              <div class="form-actions-right">
+                <button type="submit" class="btn btn-primary btn-save-modern">
+                  <i class="fa-solid" [ngClass]="billingSaved ? 'fa-circle-check' : 'fa-floppy-disk'"></i>
+                  {{ billingSaved ? 'Bilgiler Başarıyla Kaydedildi!' : 'Fatura & Adres Bilgilerini Kaydet' }}
                 </button>
               </div>
             </form>
@@ -587,36 +610,136 @@ import { ThemeService } from '../../core/services/theme.service';
     .info-icon { color: var(--text-dim); font-size: 0.88rem; width: 18px; text-align: center; flex-shrink: 0; }
     .info-label { display: block; font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
     .info-val { display: block; font-size: 0.9rem; font-weight: 600; }
-    /* Fatura & Adres Form Grid */
-    .billing-form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 640px) { .billing-form-grid { grid-template-columns: 1fr; } }
-
-    .customer-type-toggle {
+    /* ── ULTRA MODERN FATURA & ADRES FORM STİLLERİ ── */
+    .billing-form-wrapper {
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 24px;
     }
 
-    .type-btn {
-      flex: 1;
-      padding: 10px 16px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--glass-border);
+    /* Segmented Control Switch */
+    .segmented-control {
+      display: flex;
+      padding: 4px;
       background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      gap: 6px;
+    }
+
+    .segmented-tab {
+      flex: 1;
+      padding: 12px 18px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      background: none;
       color: var(--text-muted);
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.88rem;
+      font-weight: 700;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+    }
+    .segmented-tab:hover:not(.active) {
+      color: var(--text-main);
+      background: rgba(255,255,255,0.03);
+    }
+    .segmented-tab.active {
+      background: var(--bg-secondary);
+      color: var(--primary);
+      border-color: var(--glass-border-hover);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+
+    /* Form Grid */
+    .modern-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .modern-form-grid { grid-template-columns: 1fr; }
+      .field-group.span-2 { grid-column: span 1; }
+      .segmented-control { flex-direction: column; }
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .field-group.span-2 { grid-column: span 2; }
+
+    .field-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Icon Input Wrapper */
+    .input-icon-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-ico {
+      position: absolute;
+      left: 14px;
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      pointer-events: none;
+    }
+
+    .textarea-wrap .input-ico {
+      top: 14px;
+    }
+
+    .modern-input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      outline: none;
       transition: all var(--transition-fast);
     }
-    .type-btn.active {
-      background: rgba(245,158,11,0.15);
-      border-color: #f59e0b;
-      color: #f59e0b;
+
+    .modern-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+      background: var(--bg-secondary);
+    }
+
+    .modern-textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    /* Form Actions Bar */
+    .form-actions-right {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 10px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .btn-save-modern {
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: var(--radius-md);
     }
   `]
 })
