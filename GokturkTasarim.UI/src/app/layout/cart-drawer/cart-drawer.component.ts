@@ -357,16 +357,6 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
       </div>
     </div>
-          <div class="success-ref">
-            <span>Referans Kodunuz:</span>
-            <strong>GKT-ORD-{{ randomRefCode }}</strong>
-          </div>
-          <button class="btn btn-primary" (click)="orderCompleted.set(false)">
-            <i class="fa-solid fa-check"></i> Tamam
-          </button>
-        </div>
-      </div>
-    </div>
   `,
   styles: [`
     /* ── FLOATING CART PILL (SAĞ ALT SÜZÜLEN SEPET) ── */
