@@ -129,6 +129,14 @@ import { AuthService } from '../../core/services/auth.service';
                 </div>
               </div>
 
+              <!-- Profilime Kaydet Onay Kutusu (Eğer giriş yapılmışsa) -->
+              <div class="amazon-billing-toggle" *ngIf="authService.isLoggedIn()">
+                <label class="checkbox-toggle-label">
+                  <input type="checkbox" [(ngModel)]="form.saveToProfile" class="custom-checkbox" />
+                  <span><i class="fa-solid fa-bookmark text-amber"></i> Bu adresi sonraki siparişlerim için profilime kaydet</span>
+                </label>
+              </div>
+
               <!-- Fatura Adresi Seçeneği (Amazon Billing Choice) -->
               <div class="amazon-billing-toggle">
                 <label class="checkbox-toggle-label">
@@ -770,6 +778,7 @@ export class CheckoutComponent {
     companyName: '',
     address: '',
     sameAsDeliveryAddress: true,
+    saveToProfile: true,
     billingCompanyName: '',
     billingTaxOffice: '',
     billingTaxNumber: '',
@@ -838,6 +847,24 @@ export class CheckoutComponent {
   }
 
   setStep(step: number): void {
+    if (this.currentStep() === 1 && step === 2) {
+      // Save to saved addresses list if saveToProfile is checked and user is logged in
+      if (this.authService.isLoggedIn() && this.form.saveToProfile && this.form.address) {
+        const existing = this.savedAddresses.find(a => a.address === this.form.address);
+        if (!existing) {
+          const newAddr = {
+            id: 'saved-' + (this.savedAddresses.length + 1),
+            title: '📍 ' + (this.form.companyName ? 'Kurumsal Adres' : 'Teslimat Adresi'),
+            name: this.form.fullName,
+            phone: this.form.phone,
+            address: this.form.address
+          };
+          this.savedAddresses.push(newAddr);
+          this.selectedAddressId = newAddr.id;
+          this.selectedAddress.set(newAddr);
+        }
+      }
+    }
     this.currentStep.set(step);
   }
 
