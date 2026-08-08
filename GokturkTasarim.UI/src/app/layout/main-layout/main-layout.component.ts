@@ -5,6 +5,7 @@ import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { FooterComponent } from '../footer/footer.component';
 import { CartDrawerComponent } from '../cart-drawer/cart-drawer.component';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-main-layout',
