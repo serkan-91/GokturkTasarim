@@ -90,6 +90,7 @@ import { AuthService } from '../../core/services/auth.service';
     .app-sidebar {
       width: 260px;
       height: calc(100vh - 70px);
+      max-height: calc(100vh - 70px);
       background: var(--bg-secondary);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
@@ -100,6 +101,7 @@ import { AuthService } from '../../core/services/auth.service';
       transition: width 0.3s ease, background-color 0.35s ease;
       overflow-y: auto;
       z-index: 90;
+      flex-shrink: 0;
     }
 
     .app-sidebar.collapsed {

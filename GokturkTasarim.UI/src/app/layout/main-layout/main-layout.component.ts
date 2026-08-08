@@ -35,15 +35,14 @@ import { filter } from 'rxjs/operators';
     .layout-body {
       display: flex;
       flex: 1;
-      overflow: hidden;
+      position: relative;
     }
 
     .main-content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: calc(100vh - 70px);
-      overflow-y: auto;
+      min-width: 0;
     }
 
     .content-container {

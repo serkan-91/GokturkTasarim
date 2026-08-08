@@ -1101,12 +1101,9 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initIntersectionObserver();
 
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-      mainContent.addEventListener('scroll', () => {
-        this.checkScrollAndLoad();
-      }, { passive: true });
-    }
+    window.addEventListener('scroll', () => {
+      this.checkScrollAndLoad();
+    }, { passive: true });
   }
 
   ngOnDestroy(): void {
@@ -1118,13 +1115,9 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   private checkScrollAndLoad(): void {
     if (!this.hasNextPage() || this.loadingMore || this.isCooldown) return;
 
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-      // Strictly trigger ONLY when user reaches the absolute bottom (distance <= 30px)
-      const distanceToBottom = mainContent.scrollHeight - mainContent.scrollTop - mainContent.clientHeight;
-      if (distanceToBottom <= 30) {
-        this.loadNextPage();
-      }
+    const distanceToBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+    if (distanceToBottom <= 100) {
+      this.loadNextPage();
     }
   }
 
