@@ -27,26 +27,10 @@ import { AuthService } from '../../core/services/auth.service';
       <!-- Main Layout Grid -->
       <div class="checkout-grid" *ngIf="cartService.itemCount() > 0">
         
-        <!-- LEFT COLUMN: 3-STEP CHECKOUT WIZARD FORM -->
+        <!-- LEFT COLUMN: AMAZON CHECKOUT STEPS -->
         <div class="wizard-column">
           
-          <!-- Stepper Tabs -->
-          <div class="stepper-bar glass-card">
-            <div class="step-pill" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1" (click)="setStep(1)">
-              <span class="step-num">1</span>
-              <span>Teslimat & Fatura</span>
-            </div>
-            <div class="step-divider"></div>
-            <div class="step-pill" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2" (click)="currentStep() > 1 ? setStep(2) : null">
-              <span class="step-num">2</span>
-              <span>Ödeme Yöntemi</span>
-            </div>
-            <div class="step-divider"></div>
-            <div class="step-pill" [class.active]="currentStep() === 3" (click)="currentStep() > 2 ? setStep(3) : null">
-              <span class="step-num">3</span>
-              <span>Sipariş Onayı</span>
-            </div>
-               <!-- 📦 AMAZON STYLE ACCORDION STEP 1: DELIVERY ADDRESS -->
+          <!-- 📦 AMAZON STEP 1: DELIVERY ADDRESS -->
           <div class="amazon-step-card glass-card" [class.active-step]="currentStep() === 1">
             <div class="amazon-step-header" (click)="setStep(1)">
               <div class="amazon-step-num">1</div>
@@ -148,126 +132,138 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
           </div>
 
-          <!-- STEP 2: ÖDEME YÖNTEMİ SEÇİMİ -->
-          <div *ngIf="currentStep() === 2" class="glass-card step-card animate-fadeIn">
-            <div class="card-head">
-              <h3><i class="fa-solid fa-credit-card text-emerald"></i> 2. Ödeme Yöntemi Seçiniz</h3>
-              <p class="text-muted">Size uygun güvenli ödeme yöntemini belirleyin.</p>
+          <!-- 📦 AMAZON STEP 2: PAYMENT METHOD -->
+          <div class="amazon-step-card glass-card" [class.active-step]="currentStep() === 2">
+            <div class="amazon-step-header" (click)="setStep(2)">
+              <div class="amazon-step-num">2</div>
+              <div class="amazon-step-title">
+                <h3>Ödeme Yöntemi Seçin</h3>
+                <span class="amazon-step-summary" *ngIf="currentStep() > 2">
+                  {{ getPaymentMethodText() }}
+                </span>
+              </div>
+              <button class="amazon-change-btn" *ngIf="currentStep() > 2">Değiştir</button>
             </div>
 
-            <div class="payment-options-list">
-              <!-- Option 1: Credit Card -->
-              <div class="payment-box" [class.selected]="form.paymentMethod === 'CreditCard'" (click)="form.paymentMethod = 'CreditCard'">
-                <div class="pay-radio">
-                  <input type="radio" name="payOpt" value="CreditCard" [checked]="form.paymentMethod === 'CreditCard'" />
-                </div>
-                <div class="pay-info">
-                  <div class="pay-head-row">
-                    <strong class="pay-title"><i class="fa-solid fa-credit-card text-primary"></i> Kredi / Banka Kartı (PayTR Sanal POS)</strong>
-                    <span class="badge badge-success">3D SECURE</span>
+            <div *ngIf="currentStep() === 2" class="amazon-step-body animate-fadeIn">
+              <div class="payment-options-list">
+                <!-- Option 1: Credit Card -->
+                <div class="payment-box" [class.selected]="form.paymentMethod === 'CreditCard'" (click)="form.paymentMethod = 'CreditCard'">
+                  <div class="pay-radio">
+                    <input type="radio" name="payOpt" value="CreditCard" [checked]="form.paymentMethod === 'CreditCard'" />
                   </div>
-                  <p class="pay-sub">Tüm banka kartları ile 256-bit şifreli güvenli ödeme yapabilirsiniz.</p>
+                  <div class="pay-info">
+                    <div class="pay-head-row">
+                      <strong class="pay-title"><i class="fa-solid fa-credit-card text-primary"></i> Kredi / Banka Kartı (PayTR Sanal POS)</strong>
+                      <span class="badge badge-success">3D SECURE</span>
+                    </div>
+                    <p class="pay-sub">Tüm banka kartları ile 256-bit şifreli güvenli ödeme yapabilirsiniz.</p>
+                  </div>
+                </div>
+
+                <!-- Credit Card Form -->
+                <div *ngIf="form.paymentMethod === 'CreditCard'" class="card-subform animate-fadeIn">
+                  <div class="checkout-form-grid">
+                    <div class="field-wrap span-2">
+                      <label class="field-label">Kart Üzerindeki İsim</label>
+                      <input type="text" class="modern-input" placeholder="AHMET YILMAZ" [(ngModel)]="form.cardHolder" />
+                    </div>
+                    <div class="field-wrap span-2">
+                      <label class="field-label">Kart Numarası</label>
+                      <input type="text" class="modern-input" placeholder="4543 **** **** 1234" maxlength="19" [(ngModel)]="form.cardNumber" />
+                    </div>
+                    <div class="field-wrap">
+                      <label class="field-label">Son Kullanma Tarihi</label>
+                      <input type="text" class="modern-input" placeholder="AA / YY" maxlength="5" [(ngModel)]="form.cardExpiry" />
+                    </div>
+                    <div class="field-wrap">
+                      <label class="field-label">CVC Güvenlik Kodu</label>
+                      <input type="password" class="modern-input" placeholder="***" maxlength="4" [(ngModel)]="form.cardCvc" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Option 2: Bank Transfer -->
+                <div class="payment-box" [class.selected]="form.paymentMethod === 'BankTransfer'" (click)="form.paymentMethod = 'BankTransfer'">
+                  <div class="pay-radio">
+                    <input type="radio" name="payOpt" value="BankTransfer" [checked]="form.paymentMethod === 'BankTransfer'" />
+                  </div>
+                  <div class="pay-info">
+                    <div class="pay-head-row">
+                      <strong class="pay-title"><i class="fa-solid fa-landmark text-emerald"></i> Banka Havalesi / EFT / FAST</strong>
+                      <span class="badge badge-primary">%5 İSKONTO</span>
+                    </div>
+                    <p class="pay-sub">Kurumsal Garanti BBVA IBAN hesabımıza ödeme yapabilirsiniz.</p>
+                  </div>
+                </div>
+
+                <!-- Option 3: Cash on Delivery -->
+                <div class="payment-box" [class.selected]="form.paymentMethod === 'CashOnDelivery'" (click)="form.paymentMethod = 'CashOnDelivery'">
+                  <div class="pay-radio">
+                    <input type="radio" name="payOpt" value="CashOnDelivery" [checked]="form.paymentMethod === 'CashOnDelivery'" />
+                  </div>
+                  <div class="pay-info">
+                    <div class="pay-head-row">
+                      <strong class="pay-title"><i class="fa-solid fa-motorcycle text-amber"></i> Kapıda / Motorlu Kuryeye Ödeme</strong>
+                    </div>
+                    <p class="pay-sub">Teslimat anında motorlu kuryemize nakit veya POS cihazı ile ödeyin.</p>
+                  </div>
                 </div>
               </div>
 
-              <!-- Credit Card Form -->
-              <div *ngIf="form.paymentMethod === 'CreditCard'" class="card-subform animate-fadeIn">
-                <div class="checkout-form-grid">
-                  <div class="field-wrap span-2">
-                    <label class="field-label">Kart Üzerindeki İsim</label>
-                    <input type="text" class="modern-input" placeholder="AHMET YILMAZ" [(ngModel)]="form.cardHolder" />
-                  </div>
-                  <div class="field-wrap span-2">
-                    <label class="field-label">Kart Numarası</label>
-                    <input type="text" class="modern-input" placeholder="4543 **** **** 1234" maxlength="19" [(ngModel)]="form.cardNumber" />
-                  </div>
-                  <div class="field-wrap">
-                    <label class="field-label">Son Kullanma Tarihi</label>
-                    <input type="text" class="modern-input" placeholder="AA / YY" maxlength="5" [(ngModel)]="form.cardExpiry" />
-                  </div>
-                  <div class="field-wrap">
-                    <label class="field-label">CVC Güvenlik Kodu</label>
-                    <input type="password" class="modern-input" placeholder="***" maxlength="4" [(ngModel)]="form.cardCvc" />
-                  </div>
-                </div>
+              <div class="step-actions">
+                <button class="btn btn-secondary" (click)="setStep(1)"><i class="fa-solid fa-arrow-left"></i> Adrese Dön</button>
+                <button class="btn btn-amazon-gold btn-lg" (click)="setStep(3)">
+                  Sipariş Onayına Geç <i class="fa-solid fa-arrow-right"></i>
+                </button>
               </div>
-
-              <!-- Option 2: Bank Transfer -->
-              <div class="payment-box" [class.selected]="form.paymentMethod === 'BankTransfer'" (click)="form.paymentMethod = 'BankTransfer'">
-                <div class="pay-radio">
-                  <input type="radio" name="payOpt" value="BankTransfer" [checked]="form.paymentMethod === 'BankTransfer'" />
-                </div>
-                <div class="pay-info">
-                  <div class="pay-head-row">
-                    <strong class="pay-title"><i class="fa-solid fa-landmark text-emerald"></i> Banka Havalesi / EFT / FAST</strong>
-                    <span class="badge badge-primary">%5 İSKONTO</span>
-                  </div>
-                  <p class="pay-sub">Kurumsal Garanti BBVA IBAN hesabımıza ödeme yapabilirsiniz.</p>
-                </div>
-              </div>
-
-              <!-- Option 3: Cash on Delivery -->
-              <div class="payment-box" [class.selected]="form.paymentMethod === 'CashOnDelivery'" (click)="form.paymentMethod = 'CashOnDelivery'">
-                <div class="pay-radio">
-                  <input type="radio" name="payOpt" value="CashOnDelivery" [checked]="form.paymentMethod === 'CashOnDelivery'" />
-                </div>
-                <div class="pay-info">
-                  <div class="pay-head-row">
-                    <strong class="pay-title"><i class="fa-solid fa-motorcycle text-amber"></i> Kapıda / Motorlu Kuryeye Ödeme</strong>
-                  </div>
-                  <p class="pay-sub">Teslimat anında motorlu kuryemize nakit veya POS cihazı ile ödeyin.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="step-actions">
-              <button class="btn btn-secondary" (click)="setStep(1)"><i class="fa-solid fa-arrow-left"></i> Adrese Dön</button>
-              <button class="btn btn-primary btn-lg" (click)="setStep(3)">
-                Sipariş Onayına Geç <i class="fa-solid fa-arrow-right"></i>
-              </button>
             </div>
           </div>
 
-          <!-- STEP 3: SİPARİŞ ONAYI & TAMAMLAMA -->
-          <div *ngIf="currentStep() === 3" class="glass-card step-card animate-fadeIn">
-            <div class="card-head">
-              <h3><i class="fa-solid fa-clipboard-check text-purple"></i> 3. Siparişi Kontrol Et ve Onayla</h3>
-              <p class="text-muted">Son kontrollerinizi yaparak siparişinizi oluşturun.</p>
-            </div>
-
-            <div class="final-review-box">
-              <div class="review-row">
-                <span class="rev-lbl">Müşteri / Alıcı:</span>
-                <strong>{{ form.fullName }} ({{ form.phone }})</strong>
-              </div>
-              <div class="review-row">
-                <span class="rev-lbl">E-Posta:</span>
-                <span>{{ form.email }}</span>
-              </div>
-              <div class="review-row">
-                <span class="rev-lbl">Teslimat Adresi:</span>
-                <span>{{ form.address }}</span>
-              </div>
-              <div class="review-row">
-                <span class="rev-lbl">Fatura Adresi:</span>
-                <span>{{ form.sameAsDeliveryAddress ? 'Teslimat Adresi ile Aynı' : (form.billingAddress || form.address) }}</span>
-              </div>
-              <div class="review-row">
-                <span class="rev-lbl">Ödeme Yöntemi:</span>
-                <strong class="text-primary">{{ getPaymentMethodText() }}</strong>
+          <!-- 📦 AMAZON STEP 3: ORDER CONFIRMATION -->
+          <div class="amazon-step-card glass-card" [class.active-step]="currentStep() === 3">
+            <div class="amazon-step-header" (click)="setStep(3)">
+              <div class="amazon-step-num">3</div>
+              <div class="amazon-step-title">
+                <h3>Sipariş İnceleme ve Onay</h3>
               </div>
             </div>
 
-            <div class="order-notes-wrap">
-              <label class="field-label">Sipariş / Baskı Notunuz (Opsiyonel)</label>
-              <textarea class="modern-input modern-textarea" rows="2" placeholder="Özel renk, kesim veya teslimat notlarınızı buraya yazabilirsiniz..." [(ngModel)]="form.notes"></textarea>
-            </div>
+            <div *ngIf="currentStep() === 3" class="amazon-step-body animate-fadeIn">
+              <div class="final-review-box">
+                <div class="review-row">
+                  <span class="rev-lbl">Müşteri / Alıcı:</span>
+                  <strong>{{ form.fullName }} ({{ form.phone }})</strong>
+                </div>
+                <div class="review-row">
+                  <span class="rev-lbl">E-Posta:</span>
+                  <span>{{ form.email }}</span>
+                </div>
+                <div class="review-row">
+                  <span class="rev-lbl">Teslimat Adresi:</span>
+                  <span>{{ form.address }}</span>
+                </div>
+                <div class="review-row">
+                  <span class="rev-lbl">Fatura Adresi:</span>
+                  <span>{{ form.sameAsDeliveryAddress ? 'Teslimat Adresi ile Aynı' : (form.billingAddress || form.address) }}</span>
+                </div>
+                <div class="review-row">
+                  <span class="rev-lbl">Ödeme Yöntemi:</span>
+                  <strong class="text-primary">{{ getPaymentMethodText() }}</strong>
+                </div>
+              </div>
 
-            <div class="step-actions">
-              <button class="btn btn-secondary" (click)="setStep(2)"><i class="fa-solid fa-arrow-left"></i> Ödemeyi Düzenle</button>
-              <button class="btn btn-primary btn-lg btn-success-gradient" (click)="submitCheckout()">
-                <i class="fa-solid fa-lock"></i> Siparişi Onayla ve Tamamla
-              </button>
+              <div class="order-notes-wrap">
+                <label class="field-label">Sipariş / Baskı Notunuz (Opsiyonel)</label>
+                <textarea class="modern-input modern-textarea" rows="2" placeholder="Özel renk, kesim veya teslimat notlarınızı buraya yazabilirsiniz..." [(ngModel)]="form.notes"></textarea>
+              </div>
+
+              <div class="step-actions">
+                <button class="btn btn-secondary" (click)="setStep(2)"><i class="fa-solid fa-arrow-left"></i> Ödemeyi Düzenle</button>
+                <button class="btn btn-amazon-gold btn-lg btn-success-gradient" (click)="submitCheckout()">
+                  <i class="fa-solid fa-lock"></i> Ödemeyi Tamamla ve Siparişi Ver
+                </button>
+              </div>
             </div>
           </div>
 
