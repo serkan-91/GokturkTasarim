@@ -11,21 +11,60 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="customer-page">
-      <!-- Customer Hero Header -->
-      <div class="customer-hero glass-card">
-        <div>
-          <span class="badge badge-success">
-            <i class="fa-solid fa-user-check"></i> MÜŞTERİ PORTALI
-          </span>
-          <h2>Hoş Geldiniz, <span class="gradient-text">{{ authService.currentUser()?.fullName }}</span></h2>
-          <p class="text-muted">Göktürk Reklam ve Promosyon siparişlerinizi ve tasarım taleplerinizi buradan takip edebilirsiniz.</p>
+
+      <!-- ── Profil Kartı ── -->
+      <div class="profile-hero glass-card">
+        <div class="profile-identity">
+          <!-- Avatar -->
+          <div class="customer-avatar-wrap">
+            <img
+              *ngIf="authService.currentUser()?.avatarUrl"
+              [src]="authService.currentUser()?.avatarUrl"
+              alt="Profil"
+              class="customer-avatar-img"
+            />
+            <div
+              *ngIf="!authService.currentUser()?.avatarUrl"
+              class="customer-avatar-initial"
+            >
+              {{ getInitials() }}
+            </div>
+            <span class="online-dot"></span>
+          </div>
+
+          <!-- Bilgiler -->
+          <div class="profile-info">
+            <span class="badge badge-success mb-4">
+              <i class="fa-solid fa-user-check"></i> MÜŞTERİ PORTALI
+            </span>
+            <h2 class="profile-name">{{ authService.currentUser()?.fullName }}</h2>
+            <div class="profile-meta">
+              <span *ngIf="authService.currentUser()?.email">
+                <i class="fa-solid fa-envelope"></i>
+                {{ authService.currentUser()?.email }}
+              </span>
+              <span *ngIf="authService.currentUser()?.phone">
+                <i class="fa-solid fa-phone"></i>
+                {{ authService.currentUser()?.phone }}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <a routerLink="/projects" class="btn btn-primary">
-          <i class="fa-solid fa-plus"></i> Yeni Sipariş Ver
-        </a>
+        <!-- Sağ taraf aksiyonlar -->
+        <div class="profile-actions">
+          <a routerLink="/settings" class="btn btn-secondary">
+            <i class="fa-solid fa-gear"></i> Profil Ayarları
+          </a>
+          <a
+            href="https://wa.me/905325182234?text=Merhaba,%20sipari%C5%9Fim%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
+            target="_blank"
+            class="btn-whatsapp-profile"
+          >
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </a>
+        </div>
       </div>
-
       <!-- Active Orders & Requests -->
       <div class="customer-grid">
         <div class="glass-card section-card">
@@ -208,9 +247,118 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
       font-size: 0.8rem;
     }
 
-    /* Skeleton */
-    .order-item.skeleton { pointer-events: none; }
-    .skel-icon {
+    /* ── Profil Hero ── */
+    .profile-hero {
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      background: linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(16,185,129,0.06) 100%);
+    }
+
+    .profile-identity {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Customer Avatar */
+    .customer-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .customer-avatar-img {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--secondary);
+      box-shadow: 0 0 0 5px var(--secondary-glow);
+    }
+
+    .customer-avatar-initial {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--secondary), var(--accent-emerald));
+      color: #fff;
+      font-weight: 900;
+      font-size: 1.6rem;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid transparent;
+      box-shadow: 0 0 0 5px var(--secondary-glow);
+    }
+
+    .online-dot {
+      position: absolute; bottom: 3px; right: 3px;
+      width: 14px; height: 14px;
+      background: var(--status-success);
+      border-radius: 50%;
+      border: 2.5px solid var(--bg-secondary);
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mb-4 { margin-bottom: 4px; }
+
+    .profile-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      font-family: var(--font-heading);
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .profile-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .profile-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .profile-meta i {
+      font-size: 0.72rem;
+      color: var(--secondary);
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-whatsapp-profile {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #fff; font-weight: 700; font-size: 0.88rem;
+      text-decoration: none;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+      box-shadow: 0 4px 14px rgba(37,211,102,0.25);
+    }
+    .btn-whatsapp-profile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(37,211,102,0.35);
+      color: #fff;
+    }
+
+    /* ── Aşağıdaki eski customer-hero stil yerine geliyor ── */
+
       width: 44px; height: 44px; border-radius: var(--radius-md);
       background: rgba(255,255,255,0.06);
       flex-shrink: 0;
@@ -286,6 +434,11 @@ export class CustomerDashboardComponent implements OnInit {
 
   activeOrders = signal<CustomerOrderDto[]>([]);
   loading = false;
+
+  getInitials(): string {
+    const name = this.authService.currentUser()?.fullName || '';
+    return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+  }
 
   ngOnInit(): void {
     this.loadOrders();
