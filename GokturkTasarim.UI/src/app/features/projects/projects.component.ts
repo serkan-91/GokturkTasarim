@@ -132,17 +132,22 @@ interface PagedProductsResponse {
           </span>
         </div>
 
-        <!-- Promo Banner -->
+        <!-- Customer & Client Facing Promo Banner -->
         <div class="promo-banner glass-card" *ngIf="activeCategory() === 'all' && !searchQuery">
           <div class="promo-content">
-            <span class="promo-tag"><i class="fa-solid fa-bolt"></i> CANLI VERİTABANI KATALOĞU</span>
+            <span class="promo-tag"><i class="fa-solid fa-star"></i> ÜRETİM & BASKI ÇÖZÜMLERİ</span>
             <h2 class="promo-title">Siz isteyin, <span class="gradient-text">biz üretelim</span></h2>
-            <p>Promojoy XML entegrasyonuyla 10.000+ ürün, anlık fiyat ve stok takibi ile hizmetinizde.</p>
+            <p>Kartvizit, broşür, tabela ve kurumsal promosyon ürünlerinde yüksek baskı kalitesi ve aynı gün teslimat seçeneği.</p>
             <div class="promo-actions">
-              <button class="btn btn-primary btn-sm" (click)="triggerXmlSync()">
-                <i class="fa-solid fa-rotate" [class.fa-spin]="syncing"></i> {{ syncing ? 'Senkronize ediliyor...' : 'XML Senkronize Et' }}
+              <!-- XML Sync button ONLY visible for Admin -->
+              <button *ngIf="authService.isAdmin()" (click)="syncXmlCatalog()" class="btn btn-primary btn-sm" [disabled]="syncing">
+                <i class="fa-solid" [ngClass]="syncing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i>
+                {{ syncing ? 'Senkronize Ediliyor...' : 'XML Senkronize Et' }}
               </button>
-              <a routerLink="/contact" class="btn btn-secondary btn-sm"><i class="fa-solid fa-paper-plane"></i> Özel Teklif Al</a>
+
+              <a href="https://wa.me/905325182234?text=Merhaba,%20%C3%B6zel%20bask%C4%B1%20teklifi%20almak%20istiyorum." target="_blank" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-paper-plane"></i> Özel Teklif Al
+              </a>
             </div>
           </div>
         </div>
