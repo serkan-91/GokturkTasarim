@@ -509,12 +509,32 @@ interface PagedProductsResponse {
       .catalog-layout { grid-template-columns: 1fr; }
     }
 
-    /* ── SIDEBAR ── */
+    /* ── SIDEBAR (STICKY & INNER SCROLLABLE) ── */
     .catalog-sidebar {
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      position: sticky;
+      top: 90px;
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    /* Custom Slim Scrollbar for Category Sidebar */
+    .catalog-sidebar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .catalog-sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .catalog-sidebar::-webkit-scrollbar-thumb {
+      background: rgba(99,102,241,0.25);
+      border-radius: 9999px;
+    }
+    .catalog-sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
     }
 
     .sidebar-header {
