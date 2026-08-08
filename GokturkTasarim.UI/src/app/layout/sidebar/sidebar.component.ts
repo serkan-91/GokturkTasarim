@@ -76,12 +76,12 @@ import { AuthService } from '../../core/services/auth.service';
           </a>
         </div>
 
-        <!-- System Settings Section -->
-        <div class="nav-section">
-          <span class="section-title">SİSTEM</span>
+        <!-- System / Personal Settings Section (Only for Logged-In Users) -->
+        <div *ngIf="authService.isLoggedIn()" class="nav-section">
+          <span class="section-title">HESAP</span>
           <a routerLink="/settings" routerLinkActive="active" class="nav-item">
             <i class="fa-solid fa-gear"></i>
-            <span class="link-text">Sistem Ayarları</span>
+            <span class="link-text">Hesap & Tercihler</span>
           </a>
         </div>
       </div>
