@@ -19,9 +19,9 @@ import { filter } from 'rxjs/operators';
           <div class="content-container">
             <router-outlet></router-outlet>
           </div>
-          <app-footer></app-footer>
         </main>
       </div>
+      <app-footer></app-footer>
     </div>
   `,
   styles: [`

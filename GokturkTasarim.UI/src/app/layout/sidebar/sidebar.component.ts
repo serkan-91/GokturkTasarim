@@ -102,6 +102,7 @@ import { AuthService } from '../../core/services/auth.service';
       overflow-y: auto;
       z-index: 90;
       flex-shrink: 0;
+      align-self: flex-start;
     }
 
     .app-sidebar.collapsed {
