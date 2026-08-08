@@ -1,5 +1,38 @@
-bin/
-obj/
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 /packages/
+
+# User-specific files & IDEs
+*.user
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+.run/
+*.DotSettings.user
 riderModule.iml
 /_ReSharper.Caches/
+
+# Sensitive configuration and connection strings
+appsettings.json
+appsettings.Development.json
+appsettings.Local.json
+appsettings*.secrets.json
+*.pfx
+*.pem
+*.key
+
+# Node / Angular / Web UI
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Generated
+.DS_Store
+Thumbs.db

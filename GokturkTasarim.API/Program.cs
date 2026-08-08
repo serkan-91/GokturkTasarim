@@ -1,24 +1,31 @@
+using GokturkTasarim.API.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+// 1. Add Services (Clean Extensions)
+builder.Services
+    .AddDatabaseServices(builder.Configuration)
+    .AddApplicationServices()
+    .AddJwtAuthenticationServices()
+    .AddCorsServices();
+
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+// 2. Database Seeding & Global Exception Middleware
+await app.SeedDatabaseAsync();
+app.UseGlobalExceptionHandler();
+
+// 3. Request Pipeline & Middleware
+app.UseScalarApiDocs();
 app.UseHttpsRedirection();
+app.UseCors("AllowAngularUI");
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.UseAntiforgery();
-
-app.MapStaticAssets();
-
+// 4. Map Minimal APIs & Controllers
+app.MapAppEndpoints();
 
 app.Run();

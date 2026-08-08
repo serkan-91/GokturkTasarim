@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SpaRoot>.\</SpaRoot>
+    <!-- Exclude node_modules and dist from dotnet compilation -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**;dist\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all Angular files in solution tree -->
+    <Content Include="src\**" />
+    <Content Include="public\**" />
+    <Content Include="package.json" />
+    <Content Include="angular.json" />
+    <Content Include="tsconfig*.json" />
+    <Content Include="proxy.conf.json" />
+    <Content Include="README.md" />
+  </ItemGroup>
+
+</Project>

@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+        <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
@@ -67,6 +68,20 @@
 
     <ItemGroup>
       <Folder Include="wwwroot\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
+      <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
+      <PackageReference Include="Microsoft.OpenApi" Version="1.6.22" />
+      <PackageReference Include="Scalar.AspNetCore" Version="2.16.18" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Gokturk.Domain\Gokturk.Domain.csproj" />
+      <ProjectReference Include="..\Gokturk.Application\Gokturk.Application.csproj" />
+      <ProjectReference Include="..\Gokturk.Persistence\Gokturk.Persistence.csproj" />
+      <ProjectReference Include="..\Gokturk.Infrastructure\Gokturk.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
