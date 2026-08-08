@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
+import { Component, Output, EventEmitter, inject, signal, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ThemeService } from '../../core/services/theme.service';
@@ -55,9 +55,9 @@ import { AuthService } from '../../core/services/auth.service';
 
         <!-- Giriş yapılmış — profil dropdown -->
         <ng-container *ngIf="authService.isLoggedIn()">
-          <div class="profile-wrap" (clickOutside)="profileOpen.set(false)">
+          <div class="profile-wrap">
             <!-- Avatar butonu -->
-            <button class="avatar-btn" (click)="profileOpen.update(v => !v)">
+            <button class="avatar-btn" (click)="toggleProfile()">
               <!-- Profil resmi varsa göster -->
               <img
                 *ngIf="authService.currentUser()?.avatarUrl"
@@ -441,8 +441,20 @@ export class HeaderComponent {
   @Output() toggleSidebar = new EventEmitter<void>();
   public themeService = inject(ThemeService);
   public authService = inject(AuthService);
+  private elRef = inject(ElementRef);
 
   profileOpen = signal(false);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.querySelector('.profile-wrap')?.contains(event.target)) {
+      this.profileOpen.set(false);
+    }
+  }
+
+  toggleProfile(): void {
+    this.profileOpen.update(v => !v);
+  }
 
   getInitials(): string {
     const name = this.authService.currentUser()?.fullName || '';
