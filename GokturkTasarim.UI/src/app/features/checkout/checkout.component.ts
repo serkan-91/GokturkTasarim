@@ -107,11 +107,29 @@ import { AuthService } from '../../core/services/auth.service';
                 </div>
               </div>
 
+              <!-- Teslimat Adresi -->
               <div class="field-wrap span-2">
-                <label class="field-label">Teslimat Adresi *</label>
+                <label class="field-label"><i class="fa-solid fa-truck-ramp-box text-emerald"></i> Teslimat Adresi (Kargo / Kurye) *</label>
                 <div class="input-wrap textarea-wrap">
                   <i class="fa-solid fa-location-dot input-ico"></i>
                   <textarea class="modern-input modern-textarea" rows="3" placeholder="Kargo/Kurye açık adresi..." [(ngModel)]="form.address"></textarea>
+                </div>
+              </div>
+
+              <!-- Fatura Adresi Aynı mı Checkbox -->
+              <div class="field-wrap span-2">
+                <label class="checkbox-toggle-label">
+                  <input type="checkbox" [(ngModel)]="form.sameAsDeliveryAddress" class="custom-checkbox" />
+                  <span class="chk-text"><i class="fa-solid fa-receipt text-cyan"></i> Fatura adresim teslimat adresimle aynı</span>
+                </label>
+              </div>
+
+              <!-- Ayrı Fatura Adresi (Eğer checkbox işareti kaldırıldıysa) -->
+              <div class="field-wrap span-2 animate-fadeIn" *ngIf="!form.sameAsDeliveryAddress">
+                <label class="field-label"><i class="fa-solid fa-file-contract text-purple"></i> Resmi Fatura Adresi *</label>
+                <div class="input-wrap textarea-wrap">
+                  <i class="fa-solid fa-building-user input-ico"></i>
+                  <textarea class="modern-input modern-textarea" rows="2" placeholder="Resmi fatura adresini buraya giriniz..." [(ngModel)]="form.billingAddress"></textarea>
                 </div>
               </div>
             </div>
@@ -222,6 +240,10 @@ import { AuthService } from '../../core/services/auth.service';
               <div class="review-row">
                 <span class="rev-lbl">Teslimat Adresi:</span>
                 <span>{{ form.address }}</span>
+              </div>
+              <div class="review-row">
+                <span class="rev-lbl">Fatura Adresi:</span>
+                <span>{{ form.sameAsDeliveryAddress ? 'Teslimat Adresi ile Aynı' : (form.billingAddress || form.address) }}</span>
               </div>
               <div class="review-row">
                 <span class="rev-lbl">Ödeme Yöntemi:</span>
@@ -486,6 +508,25 @@ import { AuthService } from '../../core/services/auth.service';
     .success-box { padding: 36px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
     .success-ico { font-size: 4rem; color: var(--status-success); }
     .order-code-badge { padding: 12px 20px; background: rgba(16,185,129,0.1); border-radius: var(--radius-md); font-size: 1rem; }
+    /* Custom Checkbox Toggle */
+    .checkbox-toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+      user-select: none;
+      padding: 6px 0;
+    }
+
+    .custom-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
   `]
 })
 export class CheckoutComponent {
@@ -504,6 +545,8 @@ export class CheckoutComponent {
     taxNumber: '',
     companyName: '',
     address: '',
+    sameAsDeliveryAddress: true,
+    billingAddress: '',
     paymentMethod: 'CreditCard' as 'CreditCard' | 'BankTransfer' | 'CashOnDelivery',
     cardHolder: '',
     cardNumber: '',
