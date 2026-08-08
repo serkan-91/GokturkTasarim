@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ElementRef, ViewChild, HostListener, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -1126,11 +1126,22 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.hideOutOfStock.update(val => !val);
   }
 
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
   private isCooldown = false;
 
   ngOnInit(): void {
     this.loadCategories();
-    this.loadProducts();
+
+    // Read initial category from URL query parameters (e.g., /projects?category=tabela)
+    this.route.queryParams.subscribe(params => {
+      const catFromUrl = params['category'] || params['cat'];
+      if (catFromUrl) {
+        this.activeCategory.set(catFromUrl);
+      }
+      this.loadProducts();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -1247,6 +1258,14 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeCategory.set(catId);
     this.activeCategoryName.set(catName);
     this.searchQuery = '';
+
+    // Update URL query parameter without page reload
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: catId === 'all' ? null : catId },
+      queryParamsHandling: 'merge'
+    });
+
     this.loadProducts();
   }
 
