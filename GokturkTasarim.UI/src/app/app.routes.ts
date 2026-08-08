@@ -41,6 +41,10 @@ export const routes: Routes = [
         path: 'contact',
         loadComponent: () => import('./features/contact/contact.component').then(m => m.ContactComponent)
       },
+      {
+        path: 'courier',
+        loadComponent: () => import('./features/courier/courier.component').then(m => m.CourierComponent)
+      },
 
       // Protected Customer Route — lazy loaded
       {

@@ -66,7 +66,7 @@ import { RouterLink } from '@angular/router';
             <li><a routerLink="/projects" class="footer-link"><i class="fa-solid fa-file-lines"></i> Broşür & Katalog</a></li>
             <li><a routerLink="/projects" class="footer-link"><i class="fa-solid fa-sign-hanging"></i> Tabela & Totem</a></li>
             <li><a routerLink="/projects" class="footer-link"><i class="fa-solid fa-gift"></i> Promosyon Ürünleri</a></li>
-            <li><a routerLink="/contact" class="footer-link"><i class="fa-solid fa-truck-fast"></i> Motorlu Kurye</a></li>
+            <li><a routerLink="/courier" class="footer-link"><i class="fa-solid fa-truck-fast"></i> Motorlu Kurye & Kargo Takip</a></li>
             <li><a routerLink="/projects" class="footer-link"><i class="fa-solid fa-print"></i> Dijital Baskı</a></li>
           </ul>
         </div>
