@@ -4,12 +4,12 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { FooterComponent } from '../footer/footer.component';
-import { filter } from 'rxjs/operators';
+import { CartDrawerComponent } from '../cart-drawer/cart-drawer.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HeaderComponent, SidebarComponent, FooterComponent],
+  imports: [CommonModule, RouterOutlet, HeaderComponent, SidebarComponent, FooterComponent, CartDrawerComponent],
   template: `
     <div class="layout-wrapper">
       <app-header (toggleSidebar)="toggleSidebar()"></app-header>
@@ -22,6 +22,7 @@ import { filter } from 'rxjs/operators';
         </main>
       </div>
       <app-footer></app-footer>
+      <app-cart-drawer></app-cart-drawer>
     </div>
   `,
   styles: [`

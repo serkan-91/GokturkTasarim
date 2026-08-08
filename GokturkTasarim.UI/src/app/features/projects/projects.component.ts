@@ -6,6 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
+import { CartService } from '../../core/services/cart.service';
+
 interface SubCategoryDto {
   id: string;
   externalId: string;
@@ -1329,16 +1331,17 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedProduct.set(null);
   }
 
+  public cartService = inject(CartService);
+
   onOrderClick(product: ProductDto): void {
-    this.orderProduct.set(product);
-    if (this.authService.isLoggedIn()) {
-      const user = this.authService.currentUser();
-      this.orderFullName = user?.fullName || '';
-      this.orderPhone = user?.phone || '';
-      this.orderStep.set('form');
-    } else {
-      this.orderStep.set('choice');
-    }
+    this.cartService.addItem({
+      id: product.id,
+      productCode: product.productCode,
+      name: product.name,
+      basePrice: product.basePrice,
+      unit: product.unit,
+      imageUrl: product.imageUrl
+    });
   }
 
   closeOrderModal(): void {
