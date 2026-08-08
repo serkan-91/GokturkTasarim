@@ -140,7 +140,7 @@ interface PagedProductsResponse {
             <p>Kartvizit, broşür, tabela ve kurumsal promosyon ürünlerinde yüksek baskı kalitesi ve aynı gün teslimat seçeneği.</p>
             <div class="promo-actions">
               <!-- XML Sync button ONLY visible for Admin -->
-              <button *ngIf="authService.isAdmin()" (click)="syncXmlCatalog()" class="btn btn-primary btn-sm" [disabled]="syncing">
+              <button *ngIf="authService.isAdmin()" (click)="triggerXmlSync()" class="btn btn-primary btn-sm" [disabled]="syncing">
                 <i class="fa-solid" [ngClass]="syncing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i>
                 {{ syncing ? 'Senkronize Ediliyor...' : 'XML Senkronize Et' }}
               </button>
