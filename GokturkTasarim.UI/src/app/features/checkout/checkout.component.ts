@@ -25,7 +25,7 @@ import { AuthService } from '../../core/services/auth.service';
       </div>
 
       <!-- Main Layout Grid -->
-      <div class="checkout-grid" *ngIf="cartService.itemCount() > 0; else emptyCart">
+      <div class="checkout-grid" *ngIf="cartService.itemCount() > 0">
         
         <!-- LEFT COLUMN: 3-STEP CHECKOUT WIZARD FORM -->
         <div class="wizard-column">
@@ -328,16 +328,14 @@ import { AuthService } from '../../core/services/auth.service';
       </div>
 
       <!-- Empty Cart State -->
-      <ng-template #emptyCart>
-        <div class="glass-card empty-checkout-card">
-          <i class="fa-solid fa-cart-arrow-down empty-ico"></i>
-          <h3>Sepetinizde Henüz Ürün Bulunmuyor</h3>
-          <p>Ödeme yapabilmek için katalogdan sipariş vermek istediğiniz ürünleri sepetinize ekleyin.</p>
-          <a routerLink="/projects" class="btn btn-primary">
-            <i class="fa-solid fa-layer-group"></i> Ürün Kataloğuna Git
-          </a>
-        </div>
-      </ng-template>
+      <div *ngIf="cartService.itemCount() === 0" class="glass-card empty-checkout-card">
+        <i class="fa-solid fa-cart-arrow-down empty-ico"></i>
+        <h3>Sepetinizde Henüz Ürün Bulunmuyor</h3>
+        <p>Ödeme yapabilmek için katalogdan sipariş vermek istediğiniz ürünleri sepetinize ekleyin.</p>
+        <a routerLink="/projects" class="btn btn-primary">
+          <i class="fa-solid fa-layer-group"></i> Ürün Kataloğuna Git
+        </a>
+      </div>
 
       <!-- SUCCESS MODAL -->
       <div class="modal-backdrop" *ngIf="isCompleted()">
