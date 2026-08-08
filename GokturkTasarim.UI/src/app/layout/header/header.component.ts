@@ -35,16 +35,6 @@ import { AuthService } from '../../core/services/auth.service';
           </a>
         </div>
 
-        <!-- Theme Toggle — sadece ikon, yazı yok -->
-        <button
-          class="icon-btn theme-toggle-btn"
-          (click)="themeService.toggleTheme()"
-          [title]="themeService.currentTheme() === 'dark' ? 'Gündüz Temasına Geç' : 'Gece Temasına Geç'"
-        >
-          <i class="fa-solid"
-             [ngClass]="themeService.currentTheme() === 'dark' ? 'fa-sun icon-sun' : 'fa-moon icon-moon'">
-          </i>
-        </button>
 
         <!-- Giriş yapılmamış — Giriş Yap butonu -->
         <ng-container *ngIf="!authService.isLoggedIn()">
