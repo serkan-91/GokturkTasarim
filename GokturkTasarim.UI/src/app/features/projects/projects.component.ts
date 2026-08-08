@@ -232,11 +232,17 @@ interface PagedProductsResponse {
           </div>
         </div>
 
-        <!-- Automatic Infinite Scroll Sentinel & Loader -->
+        <!-- Automatic Infinite Scroll Sentinel & Load More Trigger -->
         <div #scrollSentinel class="infinite-scroll-container">
           <div class="auto-loader-pill glowing-loader" *ngIf="loadingMore">
             <i class="fa-solid fa-circle-notch fa-spin text-primary"></i>
-            <span>Daha fazla ürün yükleniyor, lütfen bekleyin...</span>
+            <span>Sonraki 24 ürün yükleniyor...</span>
+          </div>
+
+          <div class="load-more-action-wrap" *ngIf="hasNextPage() && !loadingMore">
+            <button class="btn btn-outline-cyan btn-lg load-more-btn" (click)="loadNextPage()">
+              <i class="fa-solid fa-arrow-down"></i> Daha Fazla Ürün Göster (+24)
+            </button>
           </div>
         </div>
 
@@ -937,6 +943,35 @@ interface PagedProductsResponse {
     }
     .empty-icon { font-size: 3rem; color: var(--text-dim); }
 
+    /* Load More Action Wrap */
+    .infinite-scroll-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 0;
+      margin-top: 16px;
+    }
+
+    .load-more-action-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .load-more-btn {
+      padding: 14px 32px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 24px rgba(6,182,212,0.15);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .load-more-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(6,182,212,0.28);
+    }
+
     /* ── ÜRÜN İNCELEME MODALI ── */
     .modal-backdrop {
       position: fixed; inset: 0;
@@ -1226,7 +1261,7 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   loadNextPage(): void {
-    if (this.hasNextPage() && !this.loadingMore && !this.isCooldown) {
+    if (!this.loadingMore && !this.isCooldown) {
       this.isCooldown = true;
       this.loadingMore = true;
       this.currentPage++;
