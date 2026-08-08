@@ -1127,7 +1127,6 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
 
   private isCooldown = false;
 
