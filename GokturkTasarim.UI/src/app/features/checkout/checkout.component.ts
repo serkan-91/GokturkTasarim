@@ -80,33 +80,51 @@ import { AuthService } from '../../core/services/auth.service';
 
                 <div class="checkout-form-grid">
                   <div class="field-wrap">
-                    <label class="field-label">Ad Soyad *</label>
-                    <input type="text" class="modern-input" placeholder="Adınız Soyadınız" [(ngModel)]="form.fullName" />
+                    <label class="field-label"><i class="fa-solid fa-user text-purple"></i> Ad Soyad *</label>
+                    <div class="input-wrap">
+                      <i class="fa-solid fa-user input-ico"></i>
+                      <input type="text" class="modern-input" placeholder="Adınız Soyadınız" [(ngModel)]="form.fullName" />
+                    </div>
                   </div>
 
                   <div class="field-wrap">
-                    <label class="field-label">Telefon Numarası *</label>
-                    <input type="tel" class="modern-input" placeholder="05XX XXX XX XX" [(ngModel)]="form.phone" />
+                    <label class="field-label"><i class="fa-solid fa-phone text-purple"></i> Telefon Numarası *</label>
+                    <div class="input-wrap">
+                      <i class="fa-solid fa-phone input-ico"></i>
+                      <input type="tel" class="modern-input" placeholder="05XX XXX XX XX" [(ngModel)]="form.phone" />
+                    </div>
                   </div>
 
                   <div class="field-wrap">
-                    <label class="field-label">E-Posta Adresi *</label>
-                    <input type="email" class="modern-input" placeholder="ornek@domain.com" [(ngModel)]="form.email" />
+                    <label class="field-label"><i class="fa-solid fa-envelope text-cyan"></i> E-Posta Adresi *</label>
+                    <div class="input-wrap">
+                      <i class="fa-solid fa-envelope input-ico"></i>
+                      <input type="email" class="modern-input" placeholder="ornek@domain.com" [(ngModel)]="form.email" />
+                    </div>
                   </div>
 
                   <div class="field-wrap">
-                    <label class="field-label">T.C. Kimlik / Vergi No</label>
-                    <input type="text" class="modern-input" placeholder="11 haneli TKN veya 10 haneli VKN" [(ngModel)]="form.taxNumber" />
+                    <label class="field-label"><i class="fa-solid fa-id-card text-cyan"></i> T.C. Kimlik / Vergi No</label>
+                    <div class="input-wrap">
+                      <i class="fa-solid fa-id-card input-ico"></i>
+                      <input type="text" class="modern-input" placeholder="11 haneli TKN veya 10 haneli VKN" [(ngModel)]="form.taxNumber" />
+                    </div>
                   </div>
 
                   <div class="field-wrap span-2">
-                    <label class="field-label">Şirket / Fatura Unvanı (Kurumsal ise)</label>
-                    <input type="text" class="modern-input" placeholder="Göktürk Tasarım Reklam Ltd. Şti." [(ngModel)]="form.companyName" />
+                    <label class="field-label"><i class="fa-solid fa-building text-amber"></i> Şirket / Fatura Unvanı (Kurumsal ise)</label>
+                    <div class="input-wrap">
+                      <i class="fa-solid fa-building input-ico"></i>
+                      <input type="text" class="modern-input" placeholder="Göktürk Tasarım Reklam Ltd. Şti." [(ngModel)]="form.companyName" />
+                    </div>
                   </div>
 
                   <div class="field-wrap span-2">
-                    <label class="field-label">Teslimat Adresi (Kargo / Kurye) *</label>
-                    <textarea class="modern-input modern-textarea" rows="2" placeholder="Kargo/Kurye açık adresi..." [(ngModel)]="form.address"></textarea>
+                    <label class="field-label"><i class="fa-solid fa-truck-ramp-box text-emerald"></i> Teslimat Adresi (Kargo / Kurye) *</label>
+                    <div class="input-wrap textarea-wrap">
+                      <i class="fa-solid fa-location-dot input-ico"></i>
+                      <textarea class="modern-input modern-textarea" rows="2" placeholder="Kargo/Kurye açık adresi..." [(ngModel)]="form.address"></textarea>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -119,28 +137,40 @@ import { AuthService } from '../../core/services/auth.service';
                 </label>
 
                 <!-- Tam Teşekküllü Ayrı Fatura Bilgileri Paneli -->
-                <div *ngIf="!form.sameAsDeliveryAddress" class="separate-billing-box glass-card animate-fadeIn">
+                <div *ngIf="!form.sameAsDeliveryAddress" class="separate-billing-box animate-fadeIn">
                   <h4 class="amazon-subhead text-cyan"><i class="fa-solid fa-file-invoice"></i> Resmi Fatura & e-Fatura Bilgileri</h4>
                   
                   <div class="checkout-form-grid">
                     <div class="field-wrap span-2">
-                      <label class="field-label">Fatura Kesilecek Şirket Unvanı / Ad Soyad *</label>
-                      <input type="text" class="modern-input" placeholder="Örn: Göktürk Tasarım Reklam San. Tic. Ltd. Şti." [(ngModel)]="form.billingCompanyName" />
+                      <label class="field-label"><i class="fa-solid fa-building-flag text-purple"></i> Fatura Kesilecek Şirket Unvanı / Ad Soyad *</label>
+                      <div class="input-wrap">
+                        <i class="fa-solid fa-signature input-ico"></i>
+                        <input type="text" class="modern-input" placeholder="Örn: Göktürk Tasarım Reklam San. Tic. Ltd. Şti." [(ngModel)]="form.billingCompanyName" />
+                      </div>
                     </div>
 
                     <div class="field-wrap">
-                      <label class="field-label">Vergi Dairesi</label>
-                      <input type="text" class="modern-input" placeholder="Örn: Maslak Vergi Dairesi" [(ngModel)]="form.billingTaxOffice" />
+                      <label class="field-label"><i class="fa-solid fa-landmark text-amber"></i> Vergi Dairesi</label>
+                      <div class="input-wrap">
+                        <i class="fa-solid fa-building-columns input-ico"></i>
+                        <input type="text" class="modern-input" placeholder="Örn: Maslak Vergi Dairesi" [(ngModel)]="form.billingTaxOffice" />
+                      </div>
                     </div>
 
                     <div class="field-wrap">
-                      <label class="field-label">Vergi No / T.C. Kimlik No *</label>
-                      <input type="text" class="modern-input" placeholder="10 haneli VKN veya 11 haneli TKN" maxlength="11" [(ngModel)]="form.billingTaxNumber" />
+                      <label class="field-label"><i class="fa-solid fa-hashtag text-cyan"></i> Vergi No / T.C. Kimlik No *</label>
+                      <div class="input-wrap">
+                        <i class="fa-solid fa-barcode input-ico"></i>
+                        <input type="text" class="modern-input" placeholder="10 haneli VKN veya 11 haneli TKN" maxlength="11" [(ngModel)]="form.billingTaxNumber" />
+                      </div>
                     </div>
 
                     <div class="field-wrap span-2">
-                      <label class="field-label">Resmi Fatura Adresi *</label>
-                      <textarea class="modern-input modern-textarea" rows="2" placeholder="Faturanın gönderileceği / kayıtlı resmi adres..." [(ngModel)]="form.billingAddress"></textarea>
+                      <label class="field-label"><i class="fa-solid fa-file-contract text-emerald"></i> Resmi Fatura Adresi *</label>
+                      <div class="input-wrap textarea-wrap">
+                        <i class="fa-solid fa-location-dot input-ico"></i>
+                        <textarea class="modern-input modern-textarea" rows="2" placeholder="Faturanın gönderileceği / kayıtlı resmi adres..." [(ngModel)]="form.billingAddress"></textarea>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -643,11 +673,20 @@ import { AuthService } from '../../core/services/auth.service';
     .use-addr-btn { margin-top: 6px; width: 100%; justify-content: center; }
 
     .amazon-billing-toggle {
-      padding-top: 14px;
+      padding-top: 18px;
       border-top: 1px solid var(--glass-border);
-      display: flex; flex-direction: column; gap: 12px;
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .separate-billing-box { display: flex; flex-direction: column; gap: 8px; }
+
+    .separate-billing-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      background: rgba(99,102,241,0.04);
+      border: 1px dashed rgba(99,102,241,0.25);
+    }
 
     .amazon-action-bar {
       display: flex; justify-content: flex-end; padding-top: 10px;
