@@ -46,98 +46,107 @@ import { AuthService } from '../../core/services/auth.service';
               <span class="step-num">3</span>
               <span>Sipariş Onayı</span>
             </div>
-          </div>
-
-          <!-- STEP 1: ADRES & TESLİMAT BİLGİLERİ -->
-          <div *ngIf="currentStep() === 1" class="glass-card step-card animate-fadeIn">
-            <div class="card-head">
-              <h3><i class="fa-solid fa-truck-ramp-box text-cyan"></i> 1. Teslimat & Fatura Adresi</h3>
-              <p class="text-muted">Siparişinizin gönderileceği adres ve fatura detaylarını giriniz.</p>
+               <!-- 📦 AMAZON STYLE ACCORDION STEP 1: DELIVERY ADDRESS -->
+          <div class="amazon-step-card glass-card" [class.active-step]="currentStep() === 1">
+            <div class="amazon-step-header" (click)="setStep(1)">
+              <div class="amazon-step-num">1</div>
+              <div class="amazon-step-title">
+                <h3>Teslimat ve Fatura Adresi Seçin</h3>
+                <span class="amazon-step-summary" *ngIf="currentStep() > 1">
+                  {{ selectedAddress() ? selectedAddress()?.title + ' - ' + selectedAddress()?.address : form.fullName + ', ' + form.address }}
+                </span>
+              </div>
+              <button class="amazon-change-btn" *ngIf="currentStep() > 1">Değiştir</button>
             </div>
 
-            <!-- Auto-fill notice -->
-            <div class="alert-notice notice-success" *ngIf="authService.isLoggedIn()">
-              <i class="fa-solid fa-circle-check"></i>
-              <span>Profilinizdeki kayıtlı bilgileriniz <strong>otomatik dolduruldu</strong>.</span>
-            </div>
-            <div class="alert-notice notice-warn" *ngIf="!authService.isLoggedIn()">
-              <i class="fa-solid fa-user-clock"></i>
-              <span>Ziyaretçi olarak sipariş veriyorsunuz. İsterseniz <a routerLink="/login">Giriş Yaparak</a> adreslerinizi kaydedebilirsiniz.</span>
-            </div>
+            <div *ngIf="currentStep() === 1" class="amazon-step-body animate-fadeIn">
+              <!-- Logged-in Saved Address Cards (Amazon Style) -->
+              <div *ngIf="authService.isLoggedIn()" class="amazon-saved-addresses">
+                <h4 class="amazon-subhead"><i class="fa-solid fa-bookmark text-amber"></i> Kayıtlı Adresleriniz</h4>
+                <div class="amazon-address-grid">
+                  <div
+                    *ngFor="let addr of savedAddresses"
+                    class="amazon-address-card"
+                    [class.selected]="selectedAddressId === addr.id"
+                    (click)="selectAmazonAddress(addr)"
+                  >
+                    <div class="card-radio-head">
+                      <input type="radio" name="amazonAddr" [checked]="selectedAddressId === addr.id" />
+                      <strong>{{ addr.title }}</strong>
+                    </div>
+                    <p class="addr-person"><strong>{{ addr.name }}</strong> ({{ addr.phone }})</p>
+                    <p class="addr-text">{{ addr.address }}</p>
+                    <button class="btn btn-amazon-gold btn-sm use-addr-btn">Bu Adresi Kullan</button>
+                  </div>
 
-            <!-- Form Grid -->
-            <div class="checkout-form-grid">
-              <div class="field-wrap">
-                <label class="field-label">Ad Soyad *</label>
-                <div class="input-wrap">
-                  <i class="fa-solid fa-user input-ico"></i>
-                  <input type="text" class="modern-input" placeholder="Adınız Soyadınız" [(ngModel)]="form.fullName" />
+                  <!-- New Address Toggle Card -->
+                  <div class="amazon-address-card new-addr-card" [class.selected]="selectedAddressId === 'new'" (click)="selectAmazonAddress('new')">
+                    <div class="card-radio-head">
+                      <input type="radio" name="amazonAddr" [checked]="selectedAddressId === 'new'" />
+                      <strong>+ Yeni Adres Ekle</strong>
+                    </div>
+                    <p class="addr-text">Farklı bir teslimat adresi girmek için tıklayın.</p>
+                  </div>
                 </div>
               </div>
 
-              <div class="field-wrap">
-                <label class="field-label">Telefon Numarası *</label>
-                <div class="input-wrap">
-                  <i class="fa-solid fa-phone input-ico"></i>
-                  <input type="tel" class="modern-input" placeholder="05XX XXX XX XX" [(ngModel)]="form.phone" />
+              <!-- Address Form (Shown for Guest OR when "Yeni Adres Ekle" is selected) -->
+              <div *ngIf="!authService.isLoggedIn() || selectedAddressId === 'new'" class="amazon-form-block animate-fadeIn">
+                <h4 class="amazon-subhead" *ngIf="authService.isLoggedIn()"><i class="fa-solid fa-pen-to-square text-cyan"></i> Yeni Adres Detayları</h4>
+
+                <div class="checkout-form-grid">
+                  <div class="field-wrap">
+                    <label class="field-label">Ad Soyad *</label>
+                    <input type="text" class="modern-input" placeholder="Adınız Soyadınız" [(ngModel)]="form.fullName" />
+                  </div>
+
+                  <div class="field-wrap">
+                    <label class="field-label">Telefon Numarası *</label>
+                    <input type="tel" class="modern-input" placeholder="05XX XXX XX XX" [(ngModel)]="form.phone" />
+                  </div>
+
+                  <div class="field-wrap">
+                    <label class="field-label">E-Posta Adresi *</label>
+                    <input type="email" class="modern-input" placeholder="ornek@domain.com" [(ngModel)]="form.email" />
+                  </div>
+
+                  <div class="field-wrap">
+                    <label class="field-label">T.C. Kimlik / Vergi No</label>
+                    <input type="text" class="modern-input" placeholder="11 haneli TKN veya 10 haneli VKN" [(ngModel)]="form.taxNumber" />
+                  </div>
+
+                  <div class="field-wrap span-2">
+                    <label class="field-label">Şirket / Fatura Unvanı (Kurumsal ise)</label>
+                    <input type="text" class="modern-input" placeholder="Göktürk Tasarım Reklam Ltd. Şti." [(ngModel)]="form.companyName" />
+                  </div>
+
+                  <div class="field-wrap span-2">
+                    <label class="field-label">Teslimat Adresi (Kargo / Kurye) *</label>
+                    <textarea class="modern-input modern-textarea" rows="2" placeholder="Kargo/Kurye açık adresi..." [(ngModel)]="form.address"></textarea>
+                  </div>
                 </div>
               </div>
 
-              <div class="field-wrap">
-                <label class="field-label">E-Posta Adresi *</label>
-                <div class="input-wrap">
-                  <i class="fa-solid fa-envelope input-ico"></i>
-                  <input type="email" class="modern-input" placeholder="ornek@domain.com" [(ngModel)]="form.email" />
-                </div>
-              </div>
-
-              <div class="field-wrap">
-                <label class="field-label">T.C. Kimlik / Vergi No</label>
-                <div class="input-wrap">
-                  <i class="fa-solid fa-id-card input-ico"></i>
-                  <input type="text" class="modern-input" placeholder="11 haneli TKN veya 10 haneli VKN" [(ngModel)]="form.taxNumber" />
-                </div>
-              </div>
-
-              <div class="field-wrap span-2">
-                <label class="field-label">Şirket / Fatura Unvanı (Kurumsal ise)</label>
-                <div class="input-wrap">
-                  <i class="fa-solid fa-building input-ico"></i>
-                  <input type="text" class="modern-input" placeholder="Göktürk Tasarım Reklam Ltd. Şti." [(ngModel)]="form.companyName" />
-                </div>
-              </div>
-
-              <!-- Teslimat Adresi -->
-              <div class="field-wrap span-2">
-                <label class="field-label"><i class="fa-solid fa-truck-ramp-box text-emerald"></i> Teslimat Adresi (Kargo / Kurye) *</label>
-                <div class="input-wrap textarea-wrap">
-                  <i class="fa-solid fa-location-dot input-ico"></i>
-                  <textarea class="modern-input modern-textarea" rows="3" placeholder="Kargo/Kurye açık adresi..." [(ngModel)]="form.address"></textarea>
-                </div>
-              </div>
-
-              <!-- Fatura Adresi Aynı mı Checkbox -->
-              <div class="field-wrap span-2">
+              <!-- Fatura Adresi Seçeneği (Amazon Billing Choice) -->
+              <div class="amazon-billing-toggle">
                 <label class="checkbox-toggle-label">
                   <input type="checkbox" [(ngModel)]="form.sameAsDeliveryAddress" class="custom-checkbox" />
-                  <span class="chk-text"><i class="fa-solid fa-receipt text-cyan"></i> Fatura adresim teslimat adresimle aynı</span>
+                  <span>Fatura adresim teslimat adresimle aynı</span>
                 </label>
-              </div>
 
-              <!-- Ayrı Fatura Adresi (Eğer checkbox işareti kaldırıldıysa) -->
-              <div class="field-wrap span-2 animate-fadeIn" *ngIf="!form.sameAsDeliveryAddress">
-                <label class="field-label"><i class="fa-solid fa-file-contract text-purple"></i> Resmi Fatura Adresi *</label>
-                <div class="input-wrap textarea-wrap">
-                  <i class="fa-solid fa-building-user input-ico"></i>
+                <div *ngIf="!form.sameAsDeliveryAddress" class="separate-billing-box animate-fadeIn">
+                  <label class="field-label">Resmi Fatura Adresi *</label>
                   <textarea class="modern-input modern-textarea" rows="2" placeholder="Resmi fatura adresini buraya giriniz..." [(ngModel)]="form.billingAddress"></textarea>
                 </div>
               </div>
-            </div>
 
-            <div class="step-actions">
-              <button class="btn btn-primary btn-lg" (click)="setStep(2)" [disabled]="!form.fullName || !form.phone || !form.address">
-                Ödeme Yöntemine Geç <i class="fa-solid fa-arrow-right"></i>
-              </button>
+              <div class="amazon-action-bar">
+                <button class="btn btn-amazon-gold btn-lg" (click)="setStep(2)" [disabled]="!form.fullName || !form.phone || !form.address">
+                  Bu Adrese Gönder & Ödemeye Geç <i class="fa-solid fa-angle-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>        </button>
             </div>
           </div>
 
@@ -521,11 +530,111 @@ import { AuthService } from '../../core/services/auth.service';
       padding: 6px 0;
     }
 
-    .custom-checkbox {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--primary);
+    /* ── AMAZON CHECKOUT ACCORDION & CARDS STYLES ── */
+    .amazon-step-card {
+      padding: 0;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      transition: all 0.25s ease;
+    }
+    .amazon-step-card.active-step {
+      border: 2px solid #f59e0b;
+      box-shadow: 0 8px 24px rgba(245,158,11,0.15);
+    }
+
+    .amazon-step-header {
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
       cursor: pointer;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .amazon-step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: #f59e0b;
+      color: #000;
+      font-weight: 900;
+      font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .amazon-step-title { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .amazon-step-title h3 { font-size: 1.1rem; font-weight: 800; margin: 0; }
+    .amazon-step-summary { font-size: 0.8rem; color: var(--text-muted); }
+
+    .amazon-change-btn {
+      background: none; border: 1px solid var(--glass-border);
+      padding: 6px 14px; border-radius: var(--radius-sm);
+      color: var(--primary); font-weight: 700; font-size: 0.8rem; cursor: pointer;
+    }
+
+    .amazon-step-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .amazon-subhead {
+      font-size: 0.95rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Saved Address Cards Grid */
+    .amazon-address-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .amazon-address-card {
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--glass-border);
+      background: var(--bg-card);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .amazon-address-card:hover { border-color: rgba(245,158,11,0.5); }
+    .amazon-address-card.selected {
+      border-color: #f59e0b;
+      background: rgba(245,158,11,0.06);
+    }
+
+    .card-radio-head { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+    .addr-person { font-size: 0.84rem; margin: 0; color: var(--text-main); }
+    .addr-text { font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+    /* Amazon Gold Button */
+    .btn-amazon-gold {
+      background: linear-gradient(180deg, #f7dfa5 0%, #f0c14b 100%) !important;
+      border: 1.5px solid #a88734 !important;
+      color: #111 !important;
+      font-weight: 800 !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+    }
+    .btn-amazon-gold:hover {
+      background: linear-gradient(180deg, #f5d580 0%, #eab021 100%) !important;
+    }
+
+    .use-addr-btn { margin-top: 6px; width: 100%; justify-content: center; }
+
+    .amazon-billing-toggle {
+      padding-top: 14px;
+      border-top: 1px solid var(--glass-border);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .separate-billing-box { display: flex; flex-direction: column; gap: 8px; }
+
+    .amazon-action-bar {
+      display: flex; justify-content: flex-end; padding-top: 10px;
     }
   `]
 })
@@ -537,6 +646,26 @@ export class CheckoutComponent {
   currentStep = signal(1);
   isCompleted = signal(false);
   refCode = Math.floor(100000 + Math.random() * 900000);
+
+  selectedAddressId = 'saved-1';
+  selectedAddress = signal<{ id: string; title: string; name: string; phone: string; address: string } | null>(null);
+
+  savedAddresses = [
+    {
+      id: 'saved-1',
+      title: '🏢 Şirket / Ofis Adresi (Varsayılan)',
+      name: 'Serkan Yılmaz (Göktürk Tasarım)',
+      phone: '0532 518 22 34',
+      address: 'Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul'
+    },
+    {
+      id: 'saved-2',
+      title: '🏠 Ev Adresi',
+      name: 'Serkan Yılmaz',
+      phone: '0532 518 22 34',
+      address: 'Kemerburgaz Mah. Mithatpaşa Cad. No:12 D:2 Eyüpsultan / İstanbul'
+    }
+  ];
 
   form = {
     fullName: '',
@@ -558,12 +687,27 @@ export class CheckoutComponent {
   constructor() {
     if (this.authService.isLoggedIn()) {
       const u = this.authService.currentUser();
-      this.form.fullName = u?.fullName || '';
-      this.form.phone = u?.phone || '';
-      this.form.email = u?.email || '';
-      this.form.address = 'Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul';
+      this.form.fullName = u?.fullName || 'Serkan Yılmaz';
+      this.form.phone = u?.phone || '0532 518 22 34';
+      this.form.email = u?.email || 'serkan@gokturktasarim.com';
+      this.form.address = this.savedAddresses[0].address;
       this.form.companyName = 'Göktürk Tasarım Ltd. Şti.';
       this.form.taxNumber = '1920839412';
+      this.selectedAddress.set(this.savedAddresses[0]);
+    }
+  }
+
+  selectAmazonAddress(addr: any): void {
+    if (typeof addr === 'string') {
+      this.selectedAddressId = 'new';
+      this.selectedAddress.set(null);
+      this.form.address = '';
+    } else {
+      this.selectedAddressId = addr.id;
+      this.selectedAddress.set(addr);
+      this.form.fullName = addr.name;
+      this.form.phone = addr.phone;
+      this.form.address = addr.address;
     }
   }
 
