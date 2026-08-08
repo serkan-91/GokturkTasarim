@@ -42,8 +42,7 @@ import { filter } from 'rxjs/operators';
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      height: calc(100vh - 70px);
+      min-height: calc(100vh - 70px);
       overflow-y: auto;
     }
 

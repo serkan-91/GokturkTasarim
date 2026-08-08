@@ -1,8 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ApiService } from '../../core/services/api.service';
-import { ApiHealthStatus } from '../../core/models/api-response.model';
 
 @Component({
   selector: 'app-home',
@@ -134,35 +132,65 @@ import { ApiHealthStatus } from '../../core/models/api-response.model';
             </div>
           </div>
 
-          <!-- Sistem Durumu -->
-          <div class="status-card glass-card">
-            <div class="status-card-header">
-              <span><i class="fa-solid fa-circle-dot pulse"></i> Sistem Durumu</span>
-              <button class="refresh-btn" (click)="refreshHealth()">
-                <i class="fa-solid fa-arrows-rotate"></i>
-              </button>
+          <!-- Müşteri Yorumları & Güven Kartı -->
+          <div class="trust-card glass-card">
+            <div class="trust-header">
+              <h4><i class="fa-solid fa-star"></i> Müşteri Yorumları</h4>
+              <span class="badge badge-success">5.000+ Mutlu Müşteri</span>
             </div>
-            <div class="status-rows">
-              <div class="status-row">
-                <span class="status-lbl">API Bağlantısı</span>
-                <span class="badge" [ngClass]="!healthStatus ? 'badge-warning' : healthStatus.status === 'Offline' ? 'badge-warning' : 'badge-success'">
-                  {{ healthStatus?.status || '...' }}
-                </span>
+
+            <div class="testimonial-list">
+              <div class="testimonial">
+                <div class="testimonial-stars">
+                  <i class="fa-solid fa-star" *ngFor="let s of [1,2,3,4,5]"></i>
+                </div>
+                <p class="testimonial-text">
+                  "Kartvizitlerimi 24 saatte teslim ettiler. Kalite inanılmaz, kesinlikle tavsiye ederim!"
+                </p>
+                <div class="testimonial-author">
+                  <div class="author-avatar">AY</div>
+                  <div>
+                    <span class="author-name">Ahmet Yılmaz</span>
+                    <span class="author-role">İşletme Sahibi, İstanbul</span>
+                  </div>
+                </div>
               </div>
-              <div class="status-row">
-                <span class="status-lbl">Veritabanı</span>
-                <span class="badge" [ngClass]="!healthStatus ? 'badge-warning' : healthStatus.databaseConnected ? 'badge-success' : 'badge-warning'">
-                  {{ !healthStatus ? '...' : healthStatus.databaseConnected ? 'Bağlı' : 'Bağlı Değil' }}
-                </span>
+
+              <div class="testimonial">
+                <div class="testimonial-stars">
+                  <i class="fa-solid fa-star" *ngFor="let s of [1,2,3,4,5]"></i>
+                </div>
+                <p class="testimonial-text">
+                  "Tabela işimiz için harika tasarım yaptılar. Fiyat-kalite dengesi mükemmel."
+                </p>
+                <div class="testimonial-author">
+                  <div class="author-avatar">FK</div>
+                  <div>
+                    <span class="author-name">Fatma Kaya</span>
+                    <span class="author-role">Butik Sahibi, Göktürk</span>
+                  </div>
+                </div>
               </div>
-              <div class="status-row">
-                <span class="status-lbl">Ortam</span>
-                <span class="badge badge-primary">{{ healthStatus?.environment || '...' }}</span>
+            </div>
+
+            <div class="trust-stats">
+              <div class="trust-stat">
+                <span class="tstat-num">14+</span>
+                <span class="tstat-lbl">Yıl Deneyim</span>
+              </div>
+              <div class="tstat-divider"></div>
+              <div class="trust-stat">
+                <span class="tstat-num">5K+</span>
+                <span class="tstat-lbl">Mutlu Müşteri</span>
+              </div>
+              <div class="tstat-divider"></div>
+              <div class="trust-stat">
+                <span class="tstat-num">%98</span>
+                <span class="tstat-lbl">Memnuniyet</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
       <!-- ── ALT CTA BANNER ─────────────────────────── -->
       <div class="bottom-cta glass-card">
@@ -540,34 +568,134 @@ import { ApiHealthStatus } from '../../core/models/api-response.model';
 
     .quick-item.accent:hover { background: rgba(6,182,212,0.1); }
 
-    /* Sistem Durumu */
-    .status-card { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-
-    .status-card-header {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 0.85rem; font-weight: 700;
+    /* Trust Card & Testimonials */
+    .trust-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    .status-card-header span {
-      display: flex; align-items: center; gap: 8px;
+    .trust-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .pulse { color: var(--accent-emerald); animation: pulse-dot 2s infinite; }
-
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    .trust-header h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f59e0b;
+      margin: 0;
     }
 
-    .refresh-btn {
-      background: none; border: 1px solid var(--glass-border);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted); font-size: 0.8rem;
-      padding: 4px 9px; cursor: pointer;
-      transition: all 0.2s;
+    .testimonial-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    .refresh-btn:hover { color: var(--secondary); border-color: var(--secondary); }
 
+    .testimonial {
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color var(--transition-fast);
+    }
+
+    .testimonial:hover { border-color: rgba(245,158,11,0.3); }
+
+    .testimonial-stars i {
+      color: #f59e0b;
+      font-size: 0.7rem;
+    }
+
+    .testimonial-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin: 0;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .author-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .author-name {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .author-role {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+
+    /* Trust Stats Mini-Bar */
+    .trust-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: rgba(245,158,11,0.06);
+      border: 1px solid rgba(245,158,11,0.18);
+      border-radius: var(--radius-md);
+    }
+
+    .trust-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .tstat-num {
+      font-size: 1.2rem;
+      font-weight: 900;
+      font-family: var(--font-heading);
+      color: #f59e0b;
+    }
+
+    .tstat-lbl {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .tstat-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--glass-border);
+    }
     .status-rows { display: flex; flex-direction: column; gap: 10px; }
 
     .status-row {
@@ -645,9 +773,7 @@ import { ApiHealthStatus } from '../../core/models/api-response.model';
     }
   `]
 })
-export class HomeComponent implements OnInit {
-  private apiService = inject(ApiService);
-  healthStatus: ApiHealthStatus | null = null;
+export class HomeComponent {
 
   stats = [
     { num: '14+', lbl: 'Yıl Deneyim' },
@@ -674,14 +800,4 @@ export class HomeComponent implements OnInit {
     { title: 'Şeffaf Fiyatlandırma', desc: 'Sürpriz ek ücret yok; baştan netleştirilmiş fiyat.' },
     { title: '14+ Yıl Deneyim', desc: 'Sektörün her dönüşümünü bizzat yaşayan köklü tecrübe.' },
   ];
-
-  ngOnInit(): void {
-    this.refreshHealth();
-  }
-
-  refreshHealth(): void {
-    this.apiService.checkHealth().subscribe(status => {
-      this.healthStatus = status;
-    });
-  }
 }

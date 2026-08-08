@@ -20,9 +20,19 @@ import { AuthService } from '../../core/services/auth.service';
       </div>
 
       <div class="header-right">
-        <div class="api-status-pill">
-          <span class="pulse-circle"></span>
-          <span class="status-label">.NET API Active</span>
+        <!-- Quick Contact Pill -->
+        <div class="quick-contact-pill">
+          <i class="fa-solid fa-phone-volume pulse-phone"></i>
+          <a href="tel:+905325182234" class="contact-num">0 532 518 22 34</a>
+          <span class="pill-divider">|</span>
+          <a
+            href="https://wa.me/905325182234?text=Merhaba,%20bilgi%20almak%20istiyorum."
+            target="_blank"
+            class="wa-link"
+            title="WhatsApp'tan yaz"
+          >
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </a>
         </div>
 
         <!-- Theme Toggle Button (Gece / Gündüz Mode) -->
@@ -73,7 +83,8 @@ import { AuthService } from '../../core/services/auth.service';
       position: sticky;
       top: 0;
       z-index: 100;
-      transition: background-color 0.35s ease, border-color 0.35s ease;
+      transition: background-color var(--transition-slow), border-color var(--transition-slow);
+      animation: slideUp 0.3s ease;
     }
 
     .header-left, .header-right {
@@ -123,17 +134,56 @@ import { AuthService } from '../../core/services/auth.service';
       transform: scale(1.04);
     }
 
-    .api-status-pill {
+    /* Quick Contact Pill */
+    .quick-contact-pill {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      padding: 6px 14px;
+      gap: 10px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 7px 16px;
       border-radius: 9999px;
       font-size: 0.82rem;
       font-weight: 600;
-      color: var(--status-success);
+    }
+
+    .pulse-phone {
+      color: var(--accent-emerald);
+      font-size: 0.9rem;
+      animation: pulse-glow 2.5s infinite ease-in-out;
+    }
+
+    .contact-num {
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 0.84rem;
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    .contact-num:hover { color: var(--accent-emerald); }
+
+    .pill-divider {
+      color: var(--glass-border);
+      font-size: 0.9rem;
+    }
+
+    .wa-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #25D366;
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .wa-link:hover { color: #1eac55; transform: translateY(-1px); }
+    .wa-link i { font-size: 1rem; }
+
+    @media (max-width: 768px) {
+      .quick-contact-pill { display: none; }
     }
 
     .theme-toggle-btn {

@@ -119,24 +119,24 @@ import { AdminRequestDto } from '../../core/models/api-response.model';
 
             <div class="control-item">
               <div class="ctrl-info">
-                <strong>.NET API Güvenliği</strong>
-                <p>CORS & HTTPS Yetkisi</p>
+                <strong>Sistem Güvenliği</strong>
+                <p>Şifreli Bağlantı (HTTPS)</p>
               </div>
               <span class="badge badge-primary">Aktif</span>
             </div>
 
             <div class="control-item">
               <div class="ctrl-info">
-                <strong>Veritabanı Senkronizasyonu</strong>
-                <p>EF Core Migration</p>
+                <strong>Veri Tabanı</strong>
+                <p>Tam Senkronize & Güncel</p>
               </div>
               <span class="badge badge-success">Güncel</span>
             </div>
 
             <div class="control-item">
               <div class="ctrl-info">
-                <strong>Rol Yetkilendirmesi</strong>
-                <p>HttpOnly Cookie & JWT</p>
+                <strong>Yetkilendirme</strong>
+                <p>Güvenli Oturum Yönetimi</p>
               </div>
               <span class="badge badge-primary">Aktif</span>
             </div>
