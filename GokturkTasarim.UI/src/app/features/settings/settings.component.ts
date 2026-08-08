@@ -256,6 +256,85 @@ import { ThemeService } from '../../core/services/theme.service';
               </div>
             </div>
           </div>
+
+          <!-- ── Fatura & Adres Bilgileri Kartı ── -->
+          <div class="glass-card settings-card profile-card">
+            <div class="card-header">
+              <div class="card-icon icon-amber">
+                <i class="fa-solid fa-file-invoice"></i>
+              </div>
+              <div>
+                <h3>Fatura & Teslimat Adreslerim</h3>
+                <p class="text-muted">Fatura için T.C. / Vergi No ve teslimat adreslerinizi düzenleyin</p>
+              </div>
+            </div>
+
+            <form (ngSubmit)="saveBillingDetails()" class="billing-form-grid">
+              <!-- Müşteri Tipi Seçimi -->
+              <div class="form-group full-width">
+                <label class="info-label">Müşteri Tipi</label>
+                <div class="customer-type-toggle">
+                  <button
+                    type="button"
+                    class="type-btn"
+                    [class.active]="billingForm.customerType === 'Individual'"
+                    (click)="billingForm.customerType = 'Individual'"
+                  >
+                    <i class="fa-solid fa-user"></i> Bireysel (T.C. Kimlik)
+                  </button>
+                  <button
+                    type="button"
+                    class="type-btn"
+                    [class.active]="billingForm.customerType === 'Corporate'"
+                    (click)="billingForm.customerType = 'Corporate'"
+                  >
+                    <i class="fa-solid fa-building"></i> Kurumsal (Şirket)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bireysel: TKN -->
+              <div class="form-group" *ngIf="billingForm.customerType === 'Individual'">
+                <label class="info-label"><i class="fa-solid fa-id-card"></i> T.C. Kimlik No</label>
+                <input type="text" class="form-input" placeholder="11 haneli TKN" maxlength="11" [(ngModel)]="billingForm.taxNumber" name="taxNumberInd" />
+              </div>
+
+              <!-- Kurumsal: Vergi Dairesi & Vergi No -->
+              <ng-container *ngIf="billingForm.customerType === 'Corporate'">
+                <div class="form-group full-width">
+                  <label class="info-label"><i class="fa-solid fa-building-flag"></i> Şirket / Fatura Unvanı</label>
+                  <input type="text" class="form-input" placeholder="Göktürk Tasarım Reklam Ltd. Şti." [(ngModel)]="billingForm.companyName" name="companyName" />
+                </div>
+                <div class="form-group">
+                  <label class="info-label"><i class="fa-solid fa-landmark"></i> Vergi Dairesi</label>
+                  <input type="text" class="form-input" placeholder="Örn: Maslak V.D." [(ngModel)]="billingForm.taxOffice" name="taxOffice" />
+                </div>
+                <div class="form-group">
+                  <label class="info-label"><i class="fa-solid fa-hashtag"></i> Vergi Numarası</label>
+                  <input type="text" class="form-input" placeholder="10 haneli VKN" maxlength="10" [(ngModel)]="billingForm.taxNumber" name="taxNumberCorp" />
+                </div>
+              </ng-container>
+
+              <!-- Teslimat Adresi -->
+              <div class="form-group full-width">
+                <label class="info-label"><i class="fa-solid fa-truck-ramp-box"></i> Teslimat Adresi (Kurye / Kargo)</label>
+                <textarea class="form-input" rows="2" placeholder="Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul" [(ngModel)]="billingForm.deliveryAddress" name="deliveryAddress"></textarea>
+              </div>
+
+              <!-- Fatura Adresi -->
+              <div class="form-group full-width">
+                <label class="info-label"><i class="fa-solid fa-receipt"></i> Fatura Adresi</label>
+                <textarea class="form-input" rows="2" placeholder="Teslimat adresiyle aynı değilse giriniz..." [(ngModel)]="billingForm.billingAddress" name="billingAddress"></textarea>
+              </div>
+
+              <div class="form-group full-width">
+                <button type="submit" class="btn btn-primary btn-save">
+                  <i class="fa-solid" [ngClass]="billingSaved ? 'fa-check' : 'fa-floppy-disk'"></i>
+                  {{ billingSaved ? 'Fatura Bilgileri Kaydedildi!' : 'Fatura & Adres Bilgilerini Kaydet' }}
+                </button>
+              </div>
+            </form>
+          </div>
         </ng-container>
 
       </div>
@@ -508,6 +587,37 @@ import { ThemeService } from '../../core/services/theme.service';
     .info-icon { color: var(--text-dim); font-size: 0.88rem; width: 18px; text-align: center; flex-shrink: 0; }
     .info-label { display: block; font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
     .info-val { display: block; font-size: 0.9rem; font-weight: 600; }
+    /* Fatura & Adres Form Grid */
+    .billing-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .billing-form-grid { grid-template-columns: 1fr; } }
+
+    .customer-type-toggle {
+      display: flex;
+      gap: 10px;
+    }
+
+    .type-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all var(--transition-fast);
+    }
+    .type-btn.active {
+      background: rgba(245,158,11,0.15);
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
   `]
 })
 export class SettingsComponent {
@@ -524,9 +634,20 @@ export class SettingsComponent {
 
   // Save feedback
   saved = false;
+  billingSaved = false;
 
   // Profile picture preview
   previewUrl = signal<string | null>(null);
+
+  // Billing & Address Form State
+  billingForm = {
+    customerType: 'Corporate' as 'Individual' | 'Corporate',
+    taxNumber: '1920839412',
+    taxOffice: 'Maslak Vergi Dairesi',
+    companyName: 'Göktürk Tasarım & Reklam Hizmetleri Ltd. Şti.',
+    deliveryAddress: 'Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul',
+    billingAddress: 'Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul'
+  };
 
   getInitials(): string {
     const name = this.authService.currentUser()?.fullName || '';
@@ -539,7 +660,6 @@ export class SettingsComponent {
     const reader = new FileReader();
     reader.onload = () => {
       this.previewUrl.set(reader.result as string);
-      // TODO: upload to /api/profile/avatar and update currentUser.avatarUrl
     };
     reader.readAsDataURL(file);
   }
@@ -547,5 +667,10 @@ export class SettingsComponent {
   savePreferences(): void {
     this.saved = true;
     setTimeout(() => { this.saved = false; }, 2500);
+  }
+
+  saveBillingDetails(): void {
+    this.billingSaved = true;
+    setTimeout(() => { this.billingSaved = false; }, 2500);
   }
 }

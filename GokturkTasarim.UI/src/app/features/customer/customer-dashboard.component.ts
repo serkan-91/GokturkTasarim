@@ -110,21 +110,48 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
           </div>
         </div>
 
-        <!-- Support & Direct Contact -->
-        <div class="glass-card section-card">
-          <div class="card-title-bar">
-            <h3><i class="fa-solid fa-headset"></i> Destek & İletişim</h3>
+        <!-- Support & Billing Cards -->
+        <div class="right-col-cards">
+          <!-- Registered Billing & Address Card -->
+          <div class="glass-card section-card">
+            <div class="card-title-bar">
+              <h3><i class="fa-solid fa-file-invoice"></i> Fatura & Adres Bilgileriniz</h3>
+              <a routerLink="/settings" class="edit-link" title="Düzenle">
+                <i class="fa-solid fa-pen-to-square"></i> Düzenle
+              </a>
+            </div>
+            <div class="billing-summary-box">
+              <div class="summary-item">
+                <span class="sum-lbl">Müşteri Tipi & Unvan</span>
+                <strong class="sum-val">Göktürk Tasarım & Reklam Ltd. Şti.</strong>
+              </div>
+              <div class="summary-item">
+                <span class="sum-lbl">Vergi Dairesi / No</span>
+                <span class="sum-val">Maslak V.D. - 1920839412</span>
+              </div>
+              <div class="summary-item">
+                <span class="sum-lbl">Varsayılan Teslimat Adresi</span>
+                <span class="sum-val muted-text">Göktürk Merkez Mah. İstanbul Cad. No:79 D:4 Eyüpsultan / İstanbul</span>
+              </div>
+            </div>
           </div>
-          <div class="support-box">
-            <p>Siparişleriniz veya özel tasarım talepleriniz için müşteri temsilcinizle iletişime geçebilirsiniz.</p>
-            <a href="https://wa.me/905325182234?text=Merhaba,%20sipari%C5%9Fim%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
-               target="_blank"
-               class="btn-whatsapp">
-              <i class="fa-brands fa-whatsapp"></i> WhatsApp'tan Yazın
-            </a>
-            <a routerLink="/contact" class="btn btn-secondary btn-block">
-              <i class="fa-solid fa-envelope"></i> Temsilciye Mesaj Gönder
-            </a>
+
+          <!-- Support & Direct Contact -->
+          <div class="glass-card section-card">
+            <div class="card-title-bar">
+              <h3><i class="fa-solid fa-headset"></i> Destek & İletişim</h3>
+            </div>
+            <div class="support-box">
+              <p>Siparişleriniz veya özel tasarım talepleriniz için müşteri temsilcinizle iletişime geçebilirsiniz.</p>
+              <a href="https://wa.me/905325182234?text=Merhaba,%20sipari%C5%9Fim%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
+                 target="_blank"
+                 class="btn-whatsapp">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp'tan Yazın
+              </a>
+              <a routerLink="/contact" class="btn btn-secondary btn-block">
+                <i class="fa-solid fa-envelope"></i> Temsilciye Mesaj Gönder
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -166,6 +193,33 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
         align-items: flex-start;
       }
     }
+
+    .right-col-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .edit-link {
+      font-size: 0.8rem;
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: color var(--transition-fast);
+    }
+    .edit-link:hover { color: var(--primary); }
+
+    .billing-summary-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-item { display: flex; flex-direction: column; gap: 2px; }
+    .sum-lbl { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .sum-val { font-size: 0.85rem; font-weight: 700; color: var(--text-main); }
+    .sum-val.muted-text { font-weight: 500; color: var(--text-muted); line-height: 1.4; }
 
     .section-card {
       padding: 24px;
