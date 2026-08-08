@@ -241,7 +241,7 @@ interface PagedProductsResponse {
 
           <div class="load-more-action-wrap" *ngIf="hasNextPage() && !loadingMore">
             <button class="btn btn-outline-cyan btn-lg load-more-btn" (click)="loadNextPage()">
-              <i class="fa-solid fa-arrow-down"></i> Daha Fazla Ürün Göster (+24)
+              <i class="fa-solid fa-arrow-down"></i> Daha Fazla Ürün Göster (+12 Ürün)
             </button>
           </div>
         </div>
@@ -1148,15 +1148,15 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private checkScrollAndLoad(): void {
-    if (!this.hasNextPage() || this.loadingMore || this.isCooldown) return;
+    if (this.loadingMore || this.isCooldown) return;
 
-    // Distance to absolute bottom of window scroll
-    const scrollPosition = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    // Distance to bottom of current window viewport
+    const scrollPosition = window.scrollY || document.documentElement.scrollTop;
     const windowHeight = window.innerHeight;
     const fullHeight = document.documentElement.scrollHeight;
 
     const distanceToBottom = fullHeight - (scrollPosition + windowHeight);
-    if (distanceToBottom <= 400) {
+    if (distanceToBottom <= 800) {
       this.loadNextPage();
     }
   }
@@ -1219,7 +1219,7 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const catParam = this.activeCategory() === 'all' ? '' : this.activeCategory();
-    const url = `/api/catalog/products?category=${encodeURIComponent(catParam)}&search=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&pageSize=24`;
+    const url = `/api/catalog/products?category=${encodeURIComponent(catParam)}&search=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&pageSize=12`;
 
     this.http.get<PagedProductsResponse>(url).subscribe({
       next: res => {
