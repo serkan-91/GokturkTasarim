@@ -1130,8 +1130,8 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Set root: null so it observes against the window viewport
     const options: IntersectionObserverInit = {
       root: null,
-      rootMargin: '200px',
-      threshold: 0.1
+      rootMargin: '500px',
+      threshold: 0
     };
 
     this.observer = new IntersectionObserver(([entry]) => {
@@ -1184,7 +1184,7 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const catParam = this.activeCategory() === 'all' ? '' : this.activeCategory();
-    const url = `/api/catalog/products?category=${encodeURIComponent(catParam)}&search=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&pageSize=12`;
+    const url = `/api/catalog/products?category=${encodeURIComponent(catParam)}&search=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&pageSize=24`;
 
     this.http.get<PagedProductsResponse>(url).subscribe({
       next: res => {
@@ -1197,10 +1197,10 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.hasNextPage.set(res.hasNextPage);
         this.loadingMore = false;
 
-        // 500ms cooldown after fetching a page
+        // 150ms cooldown after fetching a page
         setTimeout(() => {
           this.isCooldown = false;
-        }, 500);
+        }, 150);
       },
       error: () => {
         this.loadingMore = false;
