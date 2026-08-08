@@ -11,12 +11,35 @@ export interface CartItem {
   imageUrl?: string;
 }
 
+const CART_STORAGE_KEY = 'gokturk_cart_items';
+
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
-  items = signal<CartItem[]>([]);
+  items = signal<CartItem[]>(this.loadCartFromStorage());
   isOpen = signal<boolean>(false);
+
+  constructor() {
+    // Save to LocalStorage whenever items signal changes
+  }
+
+  private loadCartFromStorage(): CartItem[] {
+    try {
+      const stored = localStorage.getItem(CART_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveCartToStorage(cartItems: CartItem[]): void {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    } catch (e) {
+      console.error('Cart save error:', e);
+    }
+  }
 
   // Toplam Tutar
   totalAmount = computed(() =>
@@ -46,21 +69,23 @@ export class CartService {
   addItem(product: { id: string; productCode: string; name: string; basePrice: number; unit: string; imageUrl?: string }): void {
     this.items.update(currentItems => {
       const existingIndex = currentItems.findIndex(i => i.id === product.id);
+      let updated: CartItem[];
       if (existingIndex > -1) {
-        const updated = [...currentItems];
+        updated = [...currentItems];
         updated[existingIndex].quantity += 1;
-        return updated;
       } else {
-        return [...currentItems, {
+        updated = [...currentItems, {
           id: product.id,
           productCode: product.productCode,
           name: product.name,
-          basePrice: product.basePrice > 0 ? product.basePrice : 450, // Varsayılan paket fiyatı
+          basePrice: product.basePrice > 0 ? product.basePrice : 450,
           unit: product.unit || 'paket',
           quantity: 1,
           imageUrl: product.imageUrl
         }];
       }
+      this.saveCartToStorage(updated);
+      return updated;
     });
 
     this.openDrawer();
@@ -68,21 +93,30 @@ export class CartService {
 
   updateQuantity(id: string, delta: number): void {
     this.items.update(currentItems => {
-      return currentItems.map(item => {
+      const updated = currentItems.map(item => {
         if (item.id === id) {
           const newQty = item.quantity + delta;
           return newQty > 0 ? { ...item, quantity: newQty } : item;
         }
         return item;
       });
+      this.saveCartToStorage(updated);
+      return updated;
     });
   }
 
   removeItem(id: string): void {
-    this.items.update(currentItems => currentItems.filter(i => i.id !== id));
+    this.items.update(currentItems => {
+      const updated = currentItems.filter(i => i.id !== id);
+      this.saveCartToStorage(updated);
+      return updated;
+    });
   }
 
   clearCart(): void {
     this.items.set([]);
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {}
   }
 }
