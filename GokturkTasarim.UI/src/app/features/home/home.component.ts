@@ -11,9 +11,9 @@ import { RouterLink } from '@angular/router';
 
       <!-- ── HERO (Video + CTA Overlay) ─────────────── -->
       <div class="hero-section">
-        <video class="hero-video" autoplay loop muted playsinline preload="metadata">
-          <source src="banner.webm" type="video/webm">
-          <source src="banner.mp4" type="video/mp4">
+        <video class="hero-video" autoplay loop muted playsinline preload="auto">
+          <source src="/banner.webm" type="video/webm">
+          <source src="/banner.mp4" type="video/mp4">
         </video>
         <!-- Karartma katmanları -->
         <div class="hero-overlay-dark"></div>
