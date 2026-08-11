@@ -1,4 +1,4 @@
-name: Build and Deploy to Hostinger VPS
+name: Build and Deploy to Hostinger VPS (Separate FE & BE)
 
 on:
   push:
@@ -13,6 +13,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # ----------------------------------------------------
+      # 1. SETUP ENVIRONMENTS
+      # ----------------------------------------------------
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -20,27 +23,62 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Restore Dependencies
-        run: dotnet restore GokturkTasarim.API/GokturkTasarim.API.csproj
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: GokturkTasarim.UI/package-lock.json
 
-      - name: Build Project
-        run: dotnet build GokturkTasarim.API/GokturkTasarim.API.csproj -c Release --no-restore
+      # ----------------------------------------------------
+      # 2. BUILD BACKEND (.NET 10 API)
+      # ----------------------------------------------------
+      - name: Restore & Build Backend
+        run: |
+          dotnet restore GokturkTasarim.API/GokturkTasarim.API.csproj
+          dotnet publish GokturkTasarim.API/GokturkTasarim.API.csproj -c Release -o ./publish-api
 
-      - name: Publish API
-        run: dotnet publish GokturkTasarim.API/GokturkTasarim.API.csproj -c Release -o ./publish
+      # ----------------------------------------------------
+      # 3. BUILD FRONTEND (Angular 19 UI)
+      # ----------------------------------------------------
+      - name: Install & Build Frontend
+        run: |
+          cd GokturkTasarim.UI
+          npm ci
+          npm run build -- --configuration production
 
-      - name: Deploy to Hostinger via SSH
+      # ----------------------------------------------------
+      # 4. DEPLOY BACKEND TO HOSTINGER (/var/www/gokturktasarim/api)
+      # ----------------------------------------------------
+      - name: Deploy Backend via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "./publish/*"
-          target: "/var/www/gokturktasarim" # Hostinger sunucunuzdaki hedef klasör yolu
+          source: "./publish-api/*"
+          target: "/var/www/gokturktasarim/api"
           strip_components: 1
 
-      - name: Restart Service on Hostinger
+      # ----------------------------------------------------
+      # 5. DEPLOY FRONTEND TO HOSTINGER (/var/www/gokturktasarim/ui)
+      # ----------------------------------------------------
+      - name: Deploy Frontend via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: "GokturkTasarim.UI/dist/gokturk-tasarim.ui/browser/*"
+          target: "/var/www/gokturktasarim/ui"
+          strip_components: 4
+
+      # ----------------------------------------------------
+      # 6. RESTART BACKEND SERVICE & RELOAD NGINX
+      # ----------------------------------------------------
+      - name: Restart Backend Service & Reload Nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -48,4 +86,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            systemctl restart gokturkapi.service || echo "Servis yeniden başlatılamadı, yetkiyi kontrol edin"
+            mkdir -p /var/www/gokturktasarim/api /var/www/gokturktasarim/ui
+            systemctl restart gokturkapi.service || echo "Backend servisi yeniden başlatılamadı"
+            systemctl reload nginx || service nginx reload || echo "Nginx reload yapılamadı"
