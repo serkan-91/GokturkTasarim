@@ -37,6 +37,24 @@ const isDevelopment = location.hostname === 'localhost' || location.hostname ===
           <span>{{ errorMessage }}</span>
         </div>
 
+        <!-- Resend Verification Action Box -->
+        <div *ngIf="requiresEmailVerification && activeTab() === 'login'" class="resend-verification-box glass-card">
+          <div class="resend-info">
+            <i class="fa-solid fa-paper-plane text-cyan"></i>
+            <span>E-posta onay bağlantınızı bulamadınız mı? Yeni bir onay e-postası talep edebilirsiniz.</span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-outline-cyan btn-sm btn-resend"
+            [disabled]="resendCooldown > 0 || resendLoading"
+            (click)="onResendVerification()"
+          >
+            <i class="fa-solid fa-paper-plane" *ngIf="!resendLoading"></i>
+            <i class="fa-solid fa-spinner fa-spin" *ngIf="resendLoading"></i>
+            {{ resendCooldown > 0 ? ('Tekrar Gönder (' + resendCooldown + 's)') : 'Tekrar Onay E-Postası Gönder' }}
+          </button>
+        </div>
+
         <div *ngIf="successMessage" class="success-alert">
           <i class="fa-solid fa-circle-check"></i>
           <span>{{ successMessage }}</span>
@@ -304,6 +322,29 @@ const isDevelopment = location.hostname === 'localhost' || location.hostname ===
       justify-content: center;
     }
 
+    .resend-verification-box {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(6, 182, 212, 0.08) !important;
+      border: 1px dashed rgba(6, 182, 212, 0.3) !important;
+      border-radius: var(--radius-md);
+    }
+
+    .resend-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .btn-resend {
+      align-self: flex-start;
+    }
+
     .email-preview-box {
       padding: 16px;
       display: flex;
@@ -419,6 +460,12 @@ export class LoginComponent {
   regPassword = '';
   emailVerificationUrl = '';
 
+  requiresEmailVerification = false;
+  unverifiedEmail = '';
+  resendCooldown = 0;
+  resendLoading = false;
+  private cooldownTimer: any;
+
   constructor() {
     this.route.queryParams.subscribe(params => {
       if (params['error'] === 'unauthorized') {
@@ -434,6 +481,7 @@ export class LoginComponent {
     this.activeTab.set(tab);
     this.errorMessage = '';
     this.successMessage = '';
+    this.requiresEmailVerification = false;
   }
 
   onLogin(): void {
@@ -444,6 +492,7 @@ export class LoginComponent {
 
     this.loading = true;
     this.errorMessage = '';
+    this.requiresEmailVerification = false;
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (user) => {
@@ -456,8 +505,47 @@ export class LoginComponent {
       error: err => {
         this.loading = false;
         this.errorMessage = err.error?.message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
+        if (err.error?.requiresEmailVerification) {
+          this.requiresEmailVerification = true;
+          this.unverifiedEmail = err.error?.email || this.email;
+        }
       }
     });
+  }
+
+  onResendVerification(): void {
+    const emailToSend = this.unverifiedEmail || this.email;
+    if (!emailToSend || this.resendCooldown > 0 || this.resendLoading) return;
+
+    this.resendLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.authService.resendVerification(emailToSend).subscribe({
+      next: res => {
+        this.resendLoading = false;
+        this.successMessage = res.message;
+        this.startCooldownTimer(60);
+      },
+      error: err => {
+        this.resendLoading = false;
+        this.errorMessage = err.error?.message || 'E-posta tekrar gönderilemedi.';
+        if (err.status === 429) {
+          this.startCooldownTimer(60);
+        }
+      }
+    });
+  }
+
+  private startCooldownTimer(seconds: number): void {
+    this.resendCooldown = seconds;
+    if (this.cooldownTimer) clearInterval(this.cooldownTimer);
+    this.cooldownTimer = setInterval(() => {
+      this.resendCooldown--;
+      if (this.resendCooldown <= 0) {
+        clearInterval(this.cooldownTimer);
+      }
+    }, 1000);
   }
 
   onRegister(): void {

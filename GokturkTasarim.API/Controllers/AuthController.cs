@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Gokturk.Application.Common.Interfaces;
 using Gokturk.Domain.Identity.Entities;
 using Gokturk.Infrastructure.Authentication;
@@ -22,6 +23,7 @@ public class AuthController : ControllerBase
     private readonly IJwtTokenService _jwtService;
     private readonly IEmailTemplateService _emailTemplateService;
     private readonly INotificationService _notificationService;
+    private readonly IMemoryCache _memoryCache;
 
     private const string AccessTokenCookieName = "X-Access-Token";
     private const string RefreshTokenCookieName = "X-Refresh-Token";
@@ -30,12 +32,14 @@ public class AuthController : ControllerBase
         GokturkDbContext db,
         IJwtTokenService jwtService,
         IEmailTemplateService emailTemplateService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IMemoryCache memoryCache)
     {
         _db = db;
         _jwtService = jwtService;
         _emailTemplateService = emailTemplateService;
         _notificationService = notificationService;
+        _memoryCache = memoryCache;
     }
 
     [HttpPost("login")]
@@ -52,6 +56,17 @@ public class AuthController : ControllerBase
 
         if (!user.IsActive)
             return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hesabınız pasife alınmıştır." });
+
+        // Enforce Email Verification for non-Admin users
+        if (!user.IsEmailVerified && !string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                message = "E-posta adresiniz henüz doğrulanmamıştır. Lütfen e-postanıza gelen onay bağlantısına tıklayın.",
+                requiresEmailVerification = true,
+                email = user.Email
+            });
+        }
 
         // Generate Access & Refresh Tokens
         var (accessToken, accessExpiresAt) = _jwtService.GenerateAccessToken(user);
@@ -72,6 +87,73 @@ public class AuthController : ControllerBase
         SetAuthCookies(accessToken, accessExpiresAt, refreshTokenValue, refreshTokenEntity.ExpiresAt);
 
         return Ok(new UserDto(user.Id, user.FullName, user.Email, user.Role, user.IsEmailVerified));
+    }
+
+    [HttpPost("resend-verification")]
+    public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            return BadRequest(new { message = "E-posta adresi zorunludur." });
+
+        var emailClean = dto.Email.Trim().ToLower();
+
+        // Rate Limiting (Anti-DDoS): 60 saniyelik IP + E-posta koruması
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var cacheKey = $"ResendEmailCooldown:{emailClean}:{ip}";
+
+        if (_memoryCache.TryGetValue(cacheKey, out _))
+        {
+            return StatusCode(StatusCodes.Status429TooManyRequests, new
+            {
+                message = "Güvenlik kısıtlaması: Lütfen tekrar e-posta istemeden önce 60 saniye bekleyin."
+            });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == emailClean);
+        if (user == null)
+        {
+            return Ok(new { message = "Eğer e-posta adresi sistemimizde kayıtlı ise doğrulama e-postası tekrar gönderilmiştir." });
+        }
+
+        if (user.IsEmailVerified)
+        {
+            return BadRequest(new { message = "Bu e-posta adresi zaten doğrulanmıştır. Giriş yapabilirsiniz." });
+        }
+
+        // Set 60 seconds cooldown in memory cache
+        _memoryCache.Set(cacheKey, true, TimeSpan.FromSeconds(60));
+
+        // Eski kullanılmamış doğrulama tokenlarını iptal et
+        var oldTokens = await _db.EmailVerificationTokens
+            .Where(v => v.UserId == user.Id && !v.IsUsed)
+            .ToListAsync();
+        foreach (var t in oldTokens)
+        {
+            t.IsUsed = true;
+        }
+
+        // Yeni token üret
+        var verificationTokenStr = Guid.NewGuid().ToString("N");
+        var verificationToken = new EmailVerificationToken
+        {
+            UserId = user.Id,
+            Token = verificationTokenStr,
+            ExpiresAt = DateTime.UtcNow.AddHours(24)
+        };
+        await _db.EmailVerificationTokens.AddAsync(verificationToken);
+        await _db.SaveChangesAsync();
+
+        var origin = Request.Headers["Origin"].FirstOrDefault() ?? "https://gokturkpromosyon.com";
+        var verifyUrl = $"{origin}/verify-email?token={verificationTokenStr}";
+        var htmlTemplate = _emailTemplateService.GenerateEmailVerificationHtml(user.FullName, verifyUrl);
+
+        await _notificationService.SendEmailNotificationAsync(
+            user.Email,
+            "Göktürk Tasarım - E-Posta Adresinizi Doğrulayın",
+            htmlTemplate
+        );
+
+        return Ok(new { message = "Yeni doğrulama e-postası başarıyla gönderildi. Lütfen e-posta kutunuzu kontrol edin." });
     }
 
     [HttpPost("register")]
@@ -109,7 +191,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         // Build Email Verification Link & HTML Template
-        var origin = Request.Headers["Origin"].FirstOrDefault() ?? "https://localhost:4200";
+        var origin = Request.Headers["Origin"].FirstOrDefault() ?? "https://gokturkpromosyon.com";
         var verifyUrl = $"{origin}/verify-email?token={verificationTokenStr}";
         var htmlTemplate = _emailTemplateService.GenerateEmailVerificationHtml(newUser.FullName, verifyUrl);
 
@@ -262,4 +344,5 @@ public class AuthController : ControllerBase
 
 public record LoginRequest(string Email, string Password);
 public record RegisterRequest(string FullName, string Email, string Password, string? Phone);
+public record ResendVerificationRequest(string Email);
 public record UserDto(Guid Id, string FullName, string Email, string Role, bool IsEmailVerified);

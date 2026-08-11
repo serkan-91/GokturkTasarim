@@ -97,6 +97,10 @@ export class AuthService {
     return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data, { withCredentials: true });
   }
 
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-verification`, { email }, { withCredentials: true });
+  }
+
   refreshToken(): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/refresh-token`, {}, { withCredentials: true }).pipe(
       tap(user => {
