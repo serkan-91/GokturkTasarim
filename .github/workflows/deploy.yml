@@ -54,6 +54,16 @@ jobs:
           dotnet restore GokturkTasarim.API/GokturkTasarim.API.csproj
           dotnet publish GokturkTasarim.API/GokturkTasarim.API.csproj -c Release -o ./publish-api
 
+      - name: Prepare Remote Backend Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            mkdir -p /var/www/gokturktasarim/api
+
       - name: Deploy Backend via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -73,7 +83,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            mkdir -p /var/www/gokturktasarim/api
             systemctl restart gokturkapi.service || echo "Backend servisi yeniden başlatılamadı"
 
   deploy-frontend:
@@ -98,6 +107,16 @@ jobs:
           npm ci
           npm run build -- --configuration production
 
+      - name: Prepare Remote Frontend Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            mkdir -p /var/www/gokturktasarim/ui
+
       - name: Deploy Frontend via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -117,5 +136,4 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            mkdir -p /var/www/gokturktasarim/ui
             systemctl reload nginx || service nginx reload || echo "Nginx reload yapılamadı"
