@@ -1,0 +1,51 @@
+name: Build and Deploy to Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      - name: Restore Dependencies
+        run: dotnet restore GokturkTasarim.API/GokturkTasarim.API.csproj
+
+      - name: Build Project
+        run: dotnet build GokturkTasarim.API/GokturkTasarim.API.csproj -c Release --no-restore
+
+      - name: Publish API
+        run: dotnet publish GokturkTasarim.API/GokturkTasarim.API.csproj -c Release -o ./publish
+
+      - name: Deploy to Hostinger via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: "./publish/*"
+          target: "/var/www/gokturktasarim" # Hostinger sunucunuzdaki hedef klasör yolu
+          strip_components: 1
+
+      - name: Restart Service on Hostinger
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            systemctl restart gokturkapi.service || echo "Servis yeniden başlatılamadı, yetkiyi kontrol edin"
