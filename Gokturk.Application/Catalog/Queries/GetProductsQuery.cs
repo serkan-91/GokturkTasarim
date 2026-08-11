@@ -114,6 +114,7 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedPr
         var pagedItems = await query
             .OrderByDescending(p => p.StockQuantity > 0) // In-Stock Priority
             .ThenByDescending(p => p.CreatedAt)
+            .ThenBy(p => p.Id) // Unique tie-breaker for deterministic pagination
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(p => new ProductDto(

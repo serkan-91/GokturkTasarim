@@ -1447,7 +1447,11 @@ export class ProjectsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.http.get<PagedProductsResponse>(url).subscribe({
       next: res => {
         if (loadMore) {
-          this.products.update(prev => [...prev, ...res.items]);
+          this.products.update(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newUniqueItems = res.items.filter(item => !existingIds.has(item.id));
+            return [...prev, ...newUniqueItems];
+          });
         } else {
           this.products.set(res.items);
         }
