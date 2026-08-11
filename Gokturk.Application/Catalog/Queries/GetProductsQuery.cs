@@ -59,41 +59,53 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedPr
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
             var catTerm = request.Category.Trim();
+            bool isGuid = Guid.TryParse(catTerm, out var catGuid);
 
-            // Find all matching category entities (by ExternalId, ParentExternalId, Slug, Name, or Id)
+            // Find all matching category entities (by ExternalId, ParentExternalId, Slug, Name, or Guid Id)
             var matchedCategories = await _db.Categories
                 .AsNoTracking()
                 .Where(c => c.ExternalId == catTerm || 
                             c.ParentExternalId == catTerm || 
                             c.Slug == catTerm || 
                             c.Name == catTerm ||
-                            c.Id.ToString() == catTerm)
+                            (isGuid && c.Id == catGuid))
                 .ToListAsync(cancellationToken);
 
-            var categoryIds = matchedCategories.Select(c => c.ExternalId).Where(id => !string.IsNullOrEmpty(id)).ToList();
-            var categoryNames = matchedCategories.Select(c => c.Name.ToLower()).Where(n => !string.IsNullOrEmpty(n)).ToList();
+            var categoryIds = matchedCategories
+                .Select(c => c.ExternalId)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .ToList();
+
+            var categoryNames = matchedCategories
+                .Select(c => c.Name)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct()
+                .ToList();
 
             // Also find subcategories if catTerm is a main category
-            var subCategoryIds = await _db.Categories
-                .AsNoTracking()
-                .Where(c => categoryIds.Contains(c.ParentExternalId))
-                .Select(c => c.ExternalId)
-                .ToListAsync(cancellationToken);
+            if (categoryIds.Count > 0)
+            {
+                var subCategoryIds = await _db.Categories
+                    .AsNoTracking()
+                    .Where(c => categoryIds.Contains(c.ParentExternalId))
+                    .Select(c => c.ExternalId)
+                    .ToListAsync(cancellationToken);
 
-            categoryIds.AddRange(subCategoryIds);
+                categoryIds.AddRange(subCategoryIds);
+            }
+
             if (!categoryIds.Contains(catTerm))
             {
                 categoryIds.Add(catTerm);
             }
 
-            var catTermLower = catTerm.ToLower();
-
+            // Filter Products in SQL cleanly
             query = query.Where(p =>
                 categoryIds.Contains(p.ExternalCategoryId) ||
                 p.ExternalCategoryId == catTerm ||
-                categoryNames.Contains(p.Category.ToLower()) ||
-                p.Category.ToLower() == catTermLower ||
-                p.Category.ToLower().Contains(catTermLower)
+                categoryNames.Contains(p.Category) ||
+                p.Category == catTerm
             );
         }
 
