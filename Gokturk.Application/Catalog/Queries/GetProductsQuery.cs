@@ -55,27 +55,45 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedPr
             .AsNoTracking()
             .Where(p => p.IsActive);
 
-        // Filter by Category (Strict Category & Subcategory ID Matching)
+        // Filter by Category (Category & Subcategory Matching)
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
             var catTerm = request.Category.Trim();
 
-            // Find main category and all subcategories matching catTerm
-            var categoryIds = await _db.Categories
+            // Find all matching category entities (by ExternalId, ParentExternalId, Slug, Name, or Id)
+            var matchedCategories = await _db.Categories
                 .AsNoTracking()
-                .Where(c => c.ExternalId == catTerm || c.ParentExternalId == catTerm || c.Slug == catTerm)
+                .Where(c => c.ExternalId == catTerm || 
+                            c.ParentExternalId == catTerm || 
+                            c.Slug == catTerm || 
+                            c.Name == catTerm ||
+                            c.Id.ToString() == catTerm)
+                .ToListAsync(cancellationToken);
+
+            var categoryIds = matchedCategories.Select(c => c.ExternalId).Where(id => !string.IsNullOrEmpty(id)).ToList();
+            var categoryNames = matchedCategories.Select(c => c.Name.ToLower()).Where(n => !string.IsNullOrEmpty(n)).ToList();
+
+            // Also find subcategories if catTerm is a main category
+            var subCategoryIds = await _db.Categories
+                .AsNoTracking()
+                .Where(c => categoryIds.Contains(c.ParentExternalId))
                 .Select(c => c.ExternalId)
                 .ToListAsync(cancellationToken);
 
+            categoryIds.AddRange(subCategoryIds);
             if (!categoryIds.Contains(catTerm))
             {
                 categoryIds.Add(catTerm);
             }
 
-            // Strictly match ExternalCategoryId or exact Category Name (no fuzzy Contains on numerical IDs!)
+            var catTermLower = catTerm.ToLower();
+
             query = query.Where(p =>
                 categoryIds.Contains(p.ExternalCategoryId) ||
-                p.Category.Equals(catTerm, StringComparison.OrdinalIgnoreCase)
+                p.ExternalCategoryId == catTerm ||
+                categoryNames.Contains(p.Category.ToLower()) ||
+                p.Category.ToLower() == catTermLower ||
+                p.Category.ToLower().Contains(catTermLower)
             );
         }
 
