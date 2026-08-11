@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Özel yerel/sunucu ayarlarını yükle (Git'e gönderilmeyen dosya)
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // 1. Add Services (Clean Extensions)
 builder.Services
     .AddDatabaseServices(builder.Configuration)
