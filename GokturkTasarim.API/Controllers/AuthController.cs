@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Gokturk.Application.Common.Interfaces;
 using Gokturk.Domain.Identity.Entities;
 using Gokturk.Infrastructure.Authentication;
 using Gokturk.Infrastructure.Services;
@@ -20,15 +21,21 @@ public class AuthController : ControllerBase
     private readonly GokturkDbContext _db;
     private readonly IJwtTokenService _jwtService;
     private readonly IEmailTemplateService _emailTemplateService;
+    private readonly INotificationService _notificationService;
 
     private const string AccessTokenCookieName = "X-Access-Token";
     private const string RefreshTokenCookieName = "X-Refresh-Token";
 
-    public AuthController(GokturkDbContext db, IJwtTokenService jwtService, IEmailTemplateService emailTemplateService)
+    public AuthController(
+        GokturkDbContext db,
+        IJwtTokenService jwtService,
+        IEmailTemplateService emailTemplateService,
+        INotificationService notificationService)
     {
         _db = db;
         _jwtService = jwtService;
         _emailTemplateService = emailTemplateService;
+        _notificationService = notificationService;
     }
 
     [HttpPost("login")]
@@ -105,6 +112,13 @@ public class AuthController : ControllerBase
         var origin = Request.Headers["Origin"].FirstOrDefault() ?? "https://localhost:4200";
         var verifyUrl = $"{origin}/verify-email?token={verificationTokenStr}";
         var htmlTemplate = _emailTemplateService.GenerateEmailVerificationHtml(newUser.FullName, verifyUrl);
+
+        // Send Email via MailKit asynchronously
+        await _notificationService.SendEmailNotificationAsync(
+            newUser.Email,
+            "Göktürk Tasarım - E-Posta Adresinizi Doğrulayın",
+            htmlTemplate
+        );
 
         return Ok(new
         {

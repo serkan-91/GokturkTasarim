@@ -1,4 +1,5 @@
 using GokturkTasarim.API.Extensions;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,10 +10,21 @@ builder.Services
     .AddJwtAuthenticationServices()
     .AddCorsServices();
 
+// Nginx Forwarded Headers Yapılandırması
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Nginx üzerinden gelen Header'ları oku (Pipeline'ın en başında olmalı)
+app.UseForwardedHeaders();
 
 // 2. Database Seeding & Global Exception Middleware
 await app.SeedDatabaseAsync();
@@ -20,7 +32,7 @@ app.UseGlobalExceptionHandler();
 
 // 3. Request Pipeline & Middleware
 app.UseScalarApiDocs();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); -> Nginx SSL yaptığı için kapalı kalması doğru!
 app.UseCors("AllowAngularUI");
 app.UseOutputCache();
 app.UseAuthentication();

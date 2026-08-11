@@ -1,7 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Gokturk.Application.Common.Interfaces;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace Gokturk.Infrastructure.Services;
 
@@ -9,11 +13,16 @@ public class NotificationService : INotificationService
 {
     private readonly ILogger<NotificationService> _logger;
     private readonly IBackgroundQueueService _queueService;
+    private readonly IConfiguration _configuration;
 
-    public NotificationService(ILogger<NotificationService> logger, IBackgroundQueueService queueService)
+    public NotificationService(
+        ILogger<NotificationService> logger,
+        IBackgroundQueueService queueService,
+        IConfiguration configuration)
     {
         _logger = logger;
         _queueService = queueService;
+        _configuration = configuration;
     }
 
     public async Task SendOrderConfirmationSmsAsync(string phoneNumber, string customerName, string orderNumber, decimal totalAmount)
@@ -42,12 +51,51 @@ public class NotificationService : INotificationService
 
     public async Task SendEmailNotificationAsync(string toEmail, string subject, string htmlBody)
     {
-        await _queueService.QueueBackgroundWorkItemAsync((sp, cancellationToken) =>
-        {
-            _logger.LogInformation("[ASYNC EMAIL SENT to {Email}] Subject: {Subject}", toEmail, subject);
+        var smtpHost = _configuration["SmtpSettings:Host"] ?? "mail.turkticaret.net";
+        var smtpPort = int.TryParse(_configuration["SmtpSettings:Port"], out var port) ? port : 587;
+        var senderEmail = _configuration["SmtpSettings:SenderEmail"] ?? "info@gokturktasarim.com";
+        var senderName = _configuration["SmtpSettings:SenderName"] ?? "Göktürk Tasarım";
+        var username = _configuration["SmtpSettings:Username"] ?? "info@gokturktasarim.com";
+        var password = _configuration["SmtpSettings:Password"] ?? string.Empty;
 
-            // SMTP Client Email gönderimi
-            return ValueTask.CompletedTask;
+        await _queueService.QueueBackgroundWorkItemAsync(async (sp, cancellationToken) =>
+        {
+            try
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(senderName, senderEmail));
+                message.To.Add(MailboxAddress.Parse(toEmail));
+                message.Subject = subject;
+
+                var bodyBuilder = new BodyBuilder
+                {
+                    HtmlBody = htmlBody
+                };
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using var client = new SmtpClient();
+                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+                
+                var secureOption = smtpPort == 465 
+                    ? SecureSocketOptions.SslOnConnect 
+                    : SecureSocketOptions.StartTlsWhenAvailable;
+
+                await client.ConnectAsync(smtpHost, smtpPort, secureOption, cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                {
+                    await client.AuthenticateAsync(username, password, cancellationToken);
+                }
+
+                await client.SendAsync(message, cancellationToken);
+                await client.DisconnectAsync(true, cancellationToken);
+
+                _logger.LogInformation("[ASYNC MAILKIT EMAIL SENT to {Email}] Subject: {Subject}", toEmail, subject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[ASYNC MAILKIT ERROR] Failed to send email to {Email}. Host: {Host}:{Port}", toEmail, smtpHost, smtpPort);
+            }
         });
     }
 }
