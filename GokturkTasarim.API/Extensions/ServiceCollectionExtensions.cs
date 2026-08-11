@@ -63,7 +63,10 @@ public static class ServiceCollectionExtensions
         services.AddOutputCache(options =>
         {
             options.AddBasePolicy(builder => builder.Expire(TimeSpan.FromMinutes(10)));
-            options.AddPolicy("CatalogCache", builder => builder.Expire(TimeSpan.FromMinutes(15)).Tag("catalog"));
+            options.AddPolicy("CatalogCache", builder => builder
+                .Expire(TimeSpan.FromMinutes(15))
+                .SetVaryByQuery("category", "search", "page", "pageSize")
+                .Tag("catalog"));
         });
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetProductsQuery).Assembly));
