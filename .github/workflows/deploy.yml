@@ -1,21 +1,47 @@
-name: Build and Deploy to Hostinger VPS (Separate FE & BE)
+name: Build and Deploy to Hostinger VPS (Smart Selective FE & BE)
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Filter Changed Paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'GokturkTasarim.API/**'
+              - 'Gokturk.Domain/**'
+              - 'Gokturk.Application/**'
+              - 'Gokturk.Infrastructure/**'
+              - 'Gokturk.Persistence/**'
+              - 'GokturkTasarım.sln'
+              - '.github/workflows/deploy.yml'
+            frontend:
+              - 'GokturkTasarim.UI/**'
+              - '.github/workflows/deploy.yml'
+
+  deploy-backend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ----------------------------------------------------
-      # 1. SETUP ENVIRONMENTS
-      # ----------------------------------------------------
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -23,33 +49,11 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: GokturkTasarim.UI/package-lock.json
-
-      # ----------------------------------------------------
-      # 2. BUILD BACKEND (.NET 10 API)
-      # ----------------------------------------------------
-      - name: Restore & Build Backend
+      - name: Restore & Publish Backend
         run: |
           dotnet restore GokturkTasarim.API/GokturkTasarim.API.csproj
           dotnet publish GokturkTasarim.API/GokturkTasarim.API.csproj -c Release -o ./publish-api
 
-      # ----------------------------------------------------
-      # 3. BUILD FRONTEND (Angular 19 UI)
-      # ----------------------------------------------------
-      - name: Install & Build Frontend
-        run: |
-          cd GokturkTasarim.UI
-          npm ci
-          npm run build -- --configuration production
-
-      # ----------------------------------------------------
-      # 4. DEPLOY BACKEND TO HOSTINGER (/var/www/gokturktasarim/api)
-      # ----------------------------------------------------
       - name: Deploy Backend via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -61,9 +65,39 @@ jobs:
           target: "/var/www/gokturktasarim/api"
           strip_components: 1
 
-      # ----------------------------------------------------
-      # 5. DEPLOY FRONTEND TO HOSTINGER (/var/www/gokturktasarim/ui)
-      # ----------------------------------------------------
+      - name: Restart Backend Service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            mkdir -p /var/www/gokturktasarim/api
+            systemctl restart gokturkapi.service || echo "Backend servisi yeniden başlatılamadı"
+
+  deploy-frontend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: GokturkTasarim.UI/package-lock.json
+
+      - name: Install & Build Frontend
+        run: |
+          cd GokturkTasarim.UI
+          npm ci
+          npm run build -- --configuration production
+
       - name: Deploy Frontend via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -75,10 +109,7 @@ jobs:
           target: "/var/www/gokturktasarim/ui"
           strip_components: 4
 
-      # ----------------------------------------------------
-      # 6. RESTART BACKEND SERVICE & RELOAD NGINX
-      # ----------------------------------------------------
-      - name: Restart Backend Service & Reload Nginx
+      - name: Reload Nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -86,6 +117,5 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            mkdir -p /var/www/gokturktasarim/api /var/www/gokturktasarim/ui
-            systemctl restart gokturkapi.service || echo "Backend servisi yeniden başlatılamadı"
+            mkdir -p /var/www/gokturktasarim/ui
             systemctl reload nginx || service nginx reload || echo "Nginx reload yapılamadı"
