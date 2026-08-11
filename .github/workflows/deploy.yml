@@ -64,7 +64,7 @@ jobs:
           timeout: 60s
           command_timeout: 5m
           script: |
-            mkdir -p /var/www/gokturktasarim/api
+            mkdir -p /var/www/gokturkpromosyon
 
       - name: Deploy Backend via SSH
         uses: appleboy/scp-action@v0.1.7
@@ -76,7 +76,7 @@ jobs:
           timeout: 60s
           command_timeout: 5m
           source: "./publish-api/*"
-          target: "/var/www/gokturktasarim/api"
+          target: "/var/www/gokturkpromosyon"
           strip_components: 1
 
       - name: Restart Backend Service
@@ -89,7 +89,7 @@ jobs:
           timeout: 60s
           command_timeout: 5m
           script: |
-            systemctl restart gokturkapi.service || echo "Backend servisi yeniden başlatılamadı"
+            systemctl restart gokturkpromosyon.service
 
   deploy-frontend:
     needs: detect-changes
@@ -123,7 +123,7 @@ jobs:
           timeout: 60s
           command_timeout: 5m
           script: |
-            mkdir -p /var/www/gokturktasarim/ui
+            mkdir -p /var/www/gokturkpromosyon-frontend
 
       - name: Deploy Frontend via SSH
         uses: appleboy/scp-action@v0.1.7
@@ -135,7 +135,7 @@ jobs:
           timeout: 60s
           command_timeout: 5m
           source: "GokturkTasarim.UI/dist/gokturk-tasarim.ui/browser/*"
-          target: "/var/www/gokturktasarim/ui"
+          target: "/var/www/gokturkpromosyon-frontend"
           strip_components: 4
 
       - name: Reload Nginx
