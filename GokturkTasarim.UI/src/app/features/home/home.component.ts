@@ -58,16 +58,8 @@ import { ProductGroupPreviewDto } from '../../core/models/product-group.model';
         </div>
       </div>
 
-      <!-- ── AMAZON TARZI ÜRÜN GRUPLARI KUTUCUKLARI ─────────────── -->
+      <!-- ── DİNAMİK ÜRÜN GRUPLARI KUTUCUKLARI (2x2 Grid) ─────────────── -->
       <div class="section-block amazon-section" *ngIf="productGroups().length > 0">
-        <div class="section-head">
-          <span class="section-tag"><i class="fa-solid fa-boxes-packing"></i> Öne Çıkan Koleksiyonlar</span>
-          <div class="section-head-row">
-            <h2>Amazon Tarzı <span class="gradient-text">Ürün Grupları</span></h2>
-            <span class="badge badge-primary badge-sm"><i class="fa-solid fa-bolt"></i> Dinamik Gruplar</span>
-          </div>
-        </div>
-
         <div class="amazon-cards-grid">
           <div class="amazon-card glass-card" *ngFor="let g of productGroups()">
             
@@ -84,16 +76,16 @@ import { ProductGroupPreviewDto } from '../../core/models/product-group.model';
               </div>
             </div>
 
-            <!-- Box Content Preview (Top 5 Products) -->
+            <!-- Box Content Preview (4 Products in 2x2 Grid) -->
             <div class="amazon-preview-grid">
               <a
-                *ngFor="let p of g.previewProducts.slice(0, 5)"
+                *ngFor="let p of g.previewProducts.slice(0, 4)"
                 [routerLink]="['/group', g.slug]"
                 class="amz-item-card"
                 [title]="p.name + ' - ₺' + p.basePrice"
               >
                 <div class="amz-img-wrap">
-                  <img [src]="p.imageUrl || '/banner.png'" [alt]="p.name" (error)="onImgError($event)" />
+                  <img [src]="p.imageUrl || ''" [alt]="p.name" (error)="onImgError($event)" />
                   <span class="amz-price-badge">₺{{ p.basePrice }}</span>
                 </div>
                 <span class="amz-item-title">{{ p.name }}</span>
@@ -393,25 +385,27 @@ import { ProductGroupPreviewDto } from '../../core/models/product-group.model';
 
     .amazon-preview-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
     .amz-item-card {
       display: flex; flex-direction: column; gap: 6px;
       text-decoration: none; color: var(--text-main);
-      padding: 8px; border-radius: var(--radius-md); background: var(--bg-card);
+      padding: 10px; border-radius: var(--radius-md); background: var(--bg-card);
       border: 1px solid var(--glass-border); transition: all 0.2s ease;
+      box-sizing: border-box; overflow: hidden;
     }
     .amz-item-card:hover {
       border-color: var(--primary); transform: translateY(-2px);
       background: rgba(99,102,241,0.08);
     }
     .amz-img-wrap {
-      position: relative; width: 100%; height: 90px;
-      border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-secondary);
+      position: relative; width: 100%; height: 110px;
+      border-radius: var(--radius-sm); overflow: hidden; background: rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
     }
     .amz-img-wrap img {
-      width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;
+      width: 100%; height: 100%; object-fit: contain; padding: 4px; transition: transform 0.3s;
     }
     .amz-item-card:hover .amz-img-wrap img { transform: scale(1.08); }
     .amz-price-badge {

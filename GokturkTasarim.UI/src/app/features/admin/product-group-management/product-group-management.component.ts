@@ -246,6 +246,9 @@ import { AdminProductGroupDto, ProductDto } from '../../../core/models/product-g
                     <div class="check-box">
                       <i class="fa-solid fa-check" *ngIf="isProductSelected(p.id)"></i>
                     </div>
+                    <div class="prod-thumb">
+                      <img [src]="p.imageUrl || ''" [alt]="p.name" (error)="onImgError($event)" />
+                    </div>
                     <div class="prod-info">
                       <strong>{{ p.name }}</strong>
                       <span class="p-code">{{ p.productCode }} &bull; {{ p.category }} &bull; ₺{{ p.basePrice }}</span>
@@ -486,6 +489,15 @@ import { AdminProductGroupDto, ProductDto } from '../../../core/models/product-g
     }
     .prod-item.selected .check-box { background: var(--primary); border-color: var(--primary); }
 
+    .prod-thumb {
+      width: 38px; height: 38px; border-radius: 6px; overflow: hidden; background: rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      border: 1px solid var(--glass-border);
+    }
+    .prod-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
     .prod-info { display: flex; flex-direction: column; gap: 2px; }
     .prod-info strong { font-size: 0.85rem; color: var(--text-main); }
     .p-code { font-size: 0.74rem; color: var(--text-muted); }
@@ -709,6 +721,12 @@ export class ProductGroupManagementComponent implements OnInit {
         next: () => this.loadData()
       });
     }
+  }
+
+  public onImgError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.onerror = null;
+    img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="sans-serif" font-size="10">Resim Yok</text></svg>';
   }
 
   private slugify(text: string): string {
