@@ -295,7 +295,17 @@ export class ProductGroupService {
   private toPreviewDto(admin: AdminProductGroupDto): ProductGroupPreviewDto {
     const pool = this.cachedCatalogProducts.length > 0 ? this.cachedCatalogProducts : this.mockProducts;
     const idSet = new Set(admin.productIds || []);
-    const matchedProds = pool.filter(p => idSet.has(p.id));
+    let matchedProds = pool.filter(p => idSet.has(p.id));
+    if (matchedProds.length < 4 && pool.length > 0) {
+      const existing = new Set(matchedProds.map(p => p.id));
+      for (const p of pool) {
+        if (matchedProds.length >= 4) break;
+        if (!existing.has(p.id)) {
+          matchedProds.push(p);
+          existing.add(p.id);
+        }
+      }
+    }
     return {
       id: admin.id,
       name: admin.name,
@@ -303,8 +313,8 @@ export class ProductGroupService {
       description: admin.description,
       icon: admin.icon,
       displayOrder: admin.displayOrder,
-      totalProductsCount: admin.productCount || matchedProds.length,
-      previewProducts: matchedProds.length > 0 ? matchedProds.slice(0, 4) : pool.slice(0, 4)
+      totalProductsCount: admin.productCount || (admin.productIds || []).length || matchedProds.length,
+      previewProducts: matchedProds.slice(0, 4)
     };
   }
 

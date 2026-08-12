@@ -570,7 +570,18 @@ export class HomeComponent implements OnInit {
     { title: '14+ Yıl Deneyim', desc: 'Sektörün her dönüşümünü bizzat yaşayan köklü tecrübe.' },
   ];
 
+  private updateSub?: any;
+
   ngOnInit() {
+    this.loadGroups();
+    this.updateSub = this.groupService.onGroupsUpdated.subscribe(() => this.loadGroups());
+  }
+
+  ngOnDestroy() {
+    this.updateSub?.unsubscribe();
+  }
+
+  private loadGroups() {
     this.groupService.getProductGroups().subscribe({
       next: (groups) => this.productGroups.set(groups),
       error: () => this.productGroups.set([])

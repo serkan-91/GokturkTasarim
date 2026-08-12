@@ -38,8 +38,14 @@ public class GetProductGroupsQueryHandler : IRequestHandler<GetProductGroupsQuer
             .Where(g => g.IsActive)
             .OrderBy(g => g.DisplayOrder)
             .ThenBy(g => g.Name)
-            .Include(g => g.Items.OrderBy(i => i.DisplayOrder))
+            .Include(g => g.Items)
                 .ThenInclude(i => i.Product)
+            .ToListAsync(cancellationToken);
+
+        var fallbackProducts = await _db.Products
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted)
+            .Take(10)
             .ToListAsync(cancellationToken);
 
         var result = new List<ProductGroupPreviewDto>();
@@ -47,12 +53,12 @@ public class GetProductGroupsQueryHandler : IRequestHandler<GetProductGroupsQuer
         foreach (var g in groups)
         {
             var activeItems = g.Items
-                .Where(i => i.Product != null && i.Product.IsActive && !i.Product.IsDeleted)
+                .Where(i => i.Product != null && !i.Product.IsDeleted)
                 .OrderBy(i => i.DisplayOrder)
                 .ToList();
 
             var previewProducts = activeItems
-                .Take(5)
+                .Take(4)
                 .Select(i => new ProductDto(
                     i.Product.Id,
                     i.Product.ProductCode,
@@ -70,6 +76,24 @@ public class GetProductGroupsQueryHandler : IRequestHandler<GetProductGroupsQuer
                 ))
                 .ToList();
 
+            if (previewProducts.Count < 4 && fallbackProducts.Count > 0)
+            {
+                var existingIds = new HashSet<Guid>(previewProducts.Select(p => p.Id));
+                foreach (var fp in fallbackProducts)
+                {
+                    if (previewProducts.Count >= 4) break;
+                    if (!existingIds.Contains(fp.Id))
+                    {
+                        previewProducts.Add(new ProductDto(
+                            fp.Id, fp.ProductCode, fp.Name, fp.Slug, fp.Category,
+                            fp.ExternalCategoryId, fp.BasePrice, fp.Unit, fp.StockQuantity,
+                            fp.StockQuantity > 0, fp.Description, fp.ImageUrl, fp.ExternalProductUrl
+                        ));
+                        existingIds.Add(fp.Id);
+                    }
+                }
+            }
+
             result.Add(new ProductGroupPreviewDto(
                 g.Id,
                 g.Name,
@@ -77,7 +101,7 @@ public class GetProductGroupsQueryHandler : IRequestHandler<GetProductGroupsQuer
                 g.Description,
                 g.Icon,
                 g.DisplayOrder,
-                activeItems.Count,
+                g.Items.Count > 0 ? g.Items.Count : activeItems.Count,
                 previewProducts
             ));
         }
