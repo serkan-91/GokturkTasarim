@@ -53,7 +53,7 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedPr
     {
         var query = _db.Products
             .AsNoTracking()
-            .Where(p => p.IsActive);
+            .Where(p => !p.IsDeleted);
 
         // Filter by Category (Category & Subcategory Matching)
         if (!string.IsNullOrWhiteSpace(request.Category))

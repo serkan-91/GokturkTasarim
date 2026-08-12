@@ -147,35 +147,7 @@ public static class DbInitializer
             await db.SaveChangesAsync();
         }
 
-        // 4. Seed Default Product Groups if empty
-        if (!await db.ProductGroups.AnyAsync())
-        {
-            var promoGroup = new ProductGroup
-            {
-                Name = "Promosyonlar",
-                Slug = "promosyonlar",
-                Description = "Sezonun en trend promosyon çözümleri ve size özel avantajlı ürünler! 🔥",
-                Icon = "fa-solid fa-fire",
-                DisplayOrder = 1,
-                IsActive = true
-            };
-
-            var allProducts = await db.Products.ToListAsync();
-            int order = 1;
-            foreach (var p in allProducts)
-            {
-                promoGroup.Items.Add(new ProductGroupItem
-                {
-                    ProductId = p.Id,
-                    DisplayOrder = order++
-                });
-            }
-
-            await db.ProductGroups.AddAsync(promoGroup);
-            await db.SaveChangesAsync();
-        }
-
-        // 5. Seed Sample Reviews if empty
+        // 4. Seed Sample Reviews if empty
         if (!await db.ProductReviews.AnyAsync())
         {
             var firstProduct = await db.Products.FirstOrDefaultAsync();

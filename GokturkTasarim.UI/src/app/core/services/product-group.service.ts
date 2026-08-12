@@ -38,30 +38,6 @@ export class ProductGroupService {
     { id: '10000000-0000-0000-0000-000000000014', productCode: 'GKT-KR-01', name: 'Motorlu Kurye İçi Hızlı Teslimat', slug: 'motorlu-kurye', category: 'Motorlu Kurye', externalCategoryId: 'cat-kurye', basePrice: 120, unit: 'sefer', stockQuantity: 999, inStock: true, imageUrl: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=600&q=80', description: 'İstanbul içi 2 saat içerisinde adrese teslimat kurye hizmeti.' }
   ];
 
-  // Default Mock Groups for fallback
-  private mockGroups: ProductGroupPreviewDto[] = [
-    {
-      id: 'g1-matbaa',
-      name: 'Öne Çıkan Matbaa Çözümleri',
-      slug: 'one-cikan-matbaa',
-      description: 'En çok tercih edilen kurumsal kartvizit, broşür ve matbaa baskı ürünleri',
-      icon: 'fa-solid fa-fire',
-      displayOrder: 1,
-      totalProductsCount: 5,
-      previewProducts: this.mockProducts.slice(0, 5)
-    },
-    {
-      id: 'g2-kurumsal',
-      name: 'Popüler Kurumsal Ürünler',
-      slug: 'populer-kurumsal-urunler',
-      description: 'Promosyon, açık hava tabela ve hızlı kurye çözümlerimizde öne çıkanlar',
-      icon: 'fa-solid fa-star',
-      displayOrder: 2,
-      totalProductsCount: 6,
-      previewProducts: this.mockProducts.slice(2, 7)
-    }
-  ];
-
   private cachedCatalogProducts: ProductDto[] = [];
 
   get onGroupsUpdated(): Observable<boolean> {
@@ -98,7 +74,7 @@ export class ProductGroupService {
         }
       } catch { }
     }
-    return this.mockGroups;
+    return [];
   }
 
   /**
