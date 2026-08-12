@@ -89,30 +89,56 @@ public static class DbInitializer
             await db.SaveChangesAsync();
         }
 
-        // Ensure all products in database have accurate image URLs assigned
+        // Ensure all products in database have accurate 1-to-1 product image URLs assigned
         var existingProducts = await db.Products.ToListAsync();
         bool updatedAny = false;
         foreach (var p in existingProducts)
         {
-            if (string.IsNullOrEmpty(p.ImageUrl) || p.ImageUrl.Contains("unsplash.com"))
-            {
-                if (p.Name.Contains("Usb", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80";
-                else if (p.Name.Contains("Kartvizit", StringComparison.OrdinalIgnoreCase) || p.Category.Contains("Kartvizit", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80";
-                else if (p.Name.Contains("Broşür", StringComparison.OrdinalIgnoreCase) || p.Category.Contains("Broşür", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80";
-                else if (p.Name.Contains("Kalem", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1585336261026-8f5786372969?auto=format&fit=crop&w=600&q=80";
-                else if (p.Name.Contains("Termos", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Matara", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80";
-                else if (p.Name.Contains("Tabela", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80";
-                else if (p.Name.Contains("Kurye", StringComparison.OrdinalIgnoreCase))
-                    p.ImageUrl = "https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=600&q=80";
-                else
-                    p.ImageUrl = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80";
+            var name = p.Name.ToLowerInvariant();
+            var cat = (p.Category ?? "").ToLowerInvariant();
 
+            string targetUrl;
+
+            if (name.Contains("usb") || name.Contains("bellek") || cat.Contains("usb"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1588702547923-7093a6c3ba33?auto=format&fit=crop&w=600&q=80"; // USB Flash Drive
+            }
+            else if (name.Contains("kartvizit") || cat.Contains("kartvizit"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1593085260707-5377ba37f868?auto=format&fit=crop&w=600&q=80"; // Business Card Stack
+            }
+            else if (name.Contains("broşür") || name.Contains("brosur") || cat.Contains("broşür") || cat.Contains("brosur") || cat.Contains("katalog"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=600&q=80"; // Tri-fold Printed Brochure
+            }
+            else if (name.Contains("kalem"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=600&q=80"; // Executive Metal Pen
+            }
+            else if (name.Contains("defter") || name.Contains("ajanda"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80"; // Leather Journal Notebook
+            }
+            else if (name.Contains("termos") || name.Contains("matara"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80"; // Stainless Thermos Bottle
+            }
+            else if (name.Contains("tabela"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80"; // LED Signboard
+            }
+            else if (name.Contains("kurye"))
+            {
+                targetUrl = "https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=600&q=80"; // Courier Bike
+            }
+            else
+            {
+                targetUrl = "https://images.unsplash.com/photo-1593085260707-5377ba37f868?auto=format&fit=crop&w=600&q=80";
+            }
+
+            if (p.ImageUrl != targetUrl)
+            {
+                p.ImageUrl = targetUrl;
                 updatedAny = true;
             }
         }

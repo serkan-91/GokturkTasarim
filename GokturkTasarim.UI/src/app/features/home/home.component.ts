@@ -354,14 +354,17 @@ import { ProductGroupPreviewDto } from '../../core/models/product-group.model';
     /* ── AMAZON TARZI ÜRÜN GRUPLARI (Amazon Feature Box Grid) ── */
     .amazon-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 480px));
+      gap: 24px;
+      width: 100%;
     }
     .amazon-card {
       padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      width: 100%;
+      box-sizing: border-box;
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-xl);
       transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
