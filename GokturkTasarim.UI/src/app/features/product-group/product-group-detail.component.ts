@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, HostListener, ViewChild, ElementRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -42,7 +42,7 @@ import { ProductGroupDetailDto, ProductDto } from '../../core/models/product-gro
             <p *ngIf="groupDetail()?.description" class="group-desc">{{ groupDetail()?.description }}</p>
             <div class="hero-meta">
               <span class="meta-item"><i class="fa-solid fa-tag"></i> Toplam {{ totalCount() }} Ürün</span>
-              <span class="meta-item"><i class="fa-solid fa-bolt"></i> 24'lü Hızlı Yükleme (Infinite Scroll)</span>
+              <span class="meta-item"><i class="fa-solid fa-bolt"></i> Otomatik Kaydırmalı Yükleme (Infinite Scroll)</span>
             </div>
           </div>
         </div>
@@ -117,15 +117,18 @@ import { ProductGroupDetailDto, ProductDto } from '../../core/models/product-gro
         </div>
       </div>
 
+      <!-- Infinite Scroll Trigger Sentinel Element -->
+      <div #scrollSentinel class="scroll-sentinel" style="height: 10px; width: 100%;"></div>
+
       <!-- Infinite Scroll Loading Indicator & Load More Button -->
       <div class="scroll-loader-wrap" *ngIf="loadingMore()">
         <div class="loader-spinner">
           <i class="fa-solid fa-circle-notch fa-spin"></i>
         </div>
-        <span>Sonraki 24 ürün yükleniyor...</span>
+        <span>Sonraki 24 ürün otomatik yükleniyor...</span>
       </div>
 
-      <div class="load-more-btn-wrap" *ngIf="hasNextPage() && !loadingMore() && !loading()">
+      <div class="load-more-btn-wrap" *ngIf="hasNextPage() && !loadingMore() && !loading()" style="text-align: center; margin-top: 10px;">
         <button class="btn btn-outline-cyan btn-lg" (click)="loadNextBatch()">
           <i class="fa-solid fa-arrow-down"></i> Daha Fazla Ürün Göster (+24 Ürün)
         </button>
@@ -407,10 +410,13 @@ import { ProductGroupDetailDto, ProductDto } from '../../core/models/product-gro
     }
   `]
 })
-export class ProductGroupDetailComponent implements OnInit, OnDestroy {
+export class ProductGroupDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private route = inject(ActivatedRoute);
   private groupService = inject(ProductGroupService);
   private routeSub?: Subscription;
+
+  @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
 
   public groupDetail = signal<ProductGroupDetailDto | null>(null);
   public products = signal<ProductDto[]>([]);
@@ -434,8 +440,29 @@ export class ProductGroupDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  ngAfterViewInit() {
+    this.setupObserver();
+  }
+
   ngOnDestroy() {
     this.routeSub?.unsubscribe();
+    this.observer?.disconnect();
+  }
+
+  private setupObserver() {
+    if ('IntersectionObserver' in window) {
+      this.observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            this.loadNextBatch();
+          }
+        });
+      }, { rootMargin: '400px' });
+
+      if (this.scrollSentinel?.nativeElement) {
+        this.observer.observe(this.scrollSentinel.nativeElement);
+      }
+    }
   }
 
   private resetAndLoadGroup(slug: string) {
@@ -493,15 +520,22 @@ export class ProductGroupDetailComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('window:scroll', [])
+  @HostListener('document:scroll', [])
   onWindowScroll() {
     if (this.loading() || this.loadingMore() || !this.hasNextPage() || this.isFetching) {
       return;
     }
 
-    const pos = (document.documentElement.scrollTop || document.body.scrollTop) + window.innerHeight;
-    const max = document.documentElement.scrollHeight - 350; // trigger 350px before bottom
+    const windowHeight = window.innerHeight;
+    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    const fullHeight = Math.max(
+      document.body.scrollHeight, document.documentElement.scrollHeight,
+      document.body.offsetHeight, document.documentElement.offsetHeight,
+      document.body.clientHeight, document.documentElement.clientHeight
+    );
 
-    if (pos >= max) {
+    // Trigger when user scrolls to within 450px of the bottom
+    if (windowHeight + scrollY >= fullHeight - 450) {
       this.loadNextBatch();
     }
   }
