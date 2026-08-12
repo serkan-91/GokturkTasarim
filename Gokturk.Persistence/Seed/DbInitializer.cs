@@ -113,49 +113,5 @@ public static class DbInitializer
                 await db.SaveChangesAsync();
             }
         }
-        // 5. Seed Sample Product Groups if empty
-        if (!await db.ProductGroups.AnyAsync())
-        {
-            var allProducts = await db.Products.ToListAsync();
-            if (allProducts.Count > 0)
-            {
-                var group1 = new ProductGroup
-                {
-                    Name = "Öne Çıkan Matbaa Çözümleri",
-                    Slug = "one-cikan-matbaa",
-                    Description = "En çok tercih edilen kurumsal kartvizit, broşür ve matbaa baskı ürünleri",
-                    Icon = "fa-solid fa-fire",
-                    DisplayOrder = 1,
-                    IsActive = true
-                };
-
-                var group2 = new ProductGroup
-                {
-                    Name = "Popüler Kurumsal Ürünler",
-                    Slug = "populer-kurumsal-urunler",
-                    Description = "Promosyon, açık hava tabela ve hızlı kurye çözümlerimizde öne çıkanlar",
-                    Icon = "fa-solid fa-star",
-                    DisplayOrder = 2,
-                    IsActive = true
-                };
-
-                int idx = 1;
-                foreach (var p in allProducts)
-                {
-                    if (idx <= 5)
-                    {
-                        group1.Items.Add(new ProductGroupItem { ProductId = p.Id, DisplayOrder = idx });
-                    }
-                    if (idx >= 3)
-                    {
-                        group2.Items.Add(new ProductGroupItem { ProductId = p.Id, DisplayOrder = idx - 2 });
-                    }
-                    idx++;
-                }
-
-                await db.ProductGroups.AddRangeAsync(group1, group2);
-                await db.SaveChangesAsync();
-            }
-        }
     }
 }

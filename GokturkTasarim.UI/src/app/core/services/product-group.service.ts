@@ -78,7 +78,7 @@ export class ProductGroupService {
             return of(activeOnly.map(g => this.toPreviewDto(g)));
           } catch { }
         }
-        return of(this.mockGroups);
+        return of([]);
       })
     );
   }
@@ -184,20 +184,7 @@ export class ProductGroupService {
         if (local) {
           try { return of(JSON.parse(local)); } catch { }
         }
-        const initialAdmin: AdminProductGroupDto[] = this.mockGroups.map(g => ({
-          id: g.id,
-          name: g.name,
-          slug: g.slug,
-          description: g.description,
-          icon: g.icon,
-          displayOrder: g.displayOrder,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          productIds: g.previewProducts.map(p => p.id),
-          productCount: g.previewProducts.length
-        }));
-        localStorage.setItem('gokturk_product_groups', JSON.stringify(initialAdmin));
-        return of(initialAdmin);
+        return of([]);
       })
     );
   }
