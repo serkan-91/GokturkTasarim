@@ -61,6 +61,7 @@ public static class ApplicationBuilderExtensions
 
         app.MapControllers();
         app.MapCatalogEndpoints();
+        app.MapProductGroupEndpoints();
         app.MapVendorEndpoints();
         app.MapPaymentEndpoints();
         app.MapOrderEndpoints();

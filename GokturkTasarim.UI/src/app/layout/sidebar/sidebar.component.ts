@@ -1,7 +1,10 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { ProductGroupService } from '../../core/services/product-group.service';
+import { ProductGroupPreviewDto } from '../../core/models/product-group.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -22,6 +25,21 @@ import { AuthService } from '../../core/services/auth.service';
           <a routerLink="/projects" routerLinkActive="active" class="nav-item">
             <i class="fa-solid fa-folder-open"></i>
             <span class="link-text">Hizmetlerimiz</span>
+          </a>
+        </div>
+
+        <!-- Dynamic Product Groups Section (Sol Ana Menüye Dinamik Ekleme) -->
+        <div class="nav-section" *ngIf="productGroups().length > 0">
+          <span class="section-title">ÜRÜN GRUPLARI</span>
+          <a
+            *ngFor="let g of productGroups()"
+            [routerLink]="['/group', g.slug]"
+            routerLinkActive="active"
+            class="nav-item nav-group-item"
+            [title]="g.name"
+          >
+            <i [class]="g.icon || 'fa-solid fa-layer-group'"></i>
+            <span class="link-text">{{ g.name }}</span>
           </a>
         </div>
 
@@ -167,6 +185,10 @@ import { AuthService } from '../../core/services/auth.service';
       box-shadow: 0 4px 14px var(--primary-glow);
     }
 
+    .nav-group-item {
+      border-left: 2px solid rgba(168, 85, 247, 0.4);
+    }
+
     .nav-admin-item {
       border: 1px dashed var(--accent-purple);
       background: rgba(168, 85, 247, 0.08);
@@ -182,7 +204,29 @@ import { AuthService } from '../../core/services/auth.service';
     .text-purple { color: var(--accent-purple); }
   `]
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   @Input() collapsed = false;
   public authService = inject(AuthService);
+  private groupService = inject(ProductGroupService);
+
+  public productGroups = signal<ProductGroupPreviewDto[]>([]);
+  private updateSub?: Subscription;
+
+  ngOnInit() {
+    this.loadGroups();
+    this.updateSub = this.groupService.onGroupsUpdated.subscribe(() => {
+      this.loadGroups();
+    });
+  }
+
+  ngOnDestroy() {
+    this.updateSub?.unsubscribe();
+  }
+
+  private loadGroups() {
+    this.groupService.getProductGroups().subscribe({
+      next: (groups) => this.productGroups.set(groups),
+      error: () => this.productGroups.set([])
+    });
+  }
 }

@@ -19,6 +19,8 @@ public interface IGokturkDbContext
     DbSet<LaminationType> LaminationTypes { get; }
     DbSet<ProductReview> ProductReviews { get; }
     DbSet<WishlistItem> WishlistItems { get; }
+    DbSet<ProductGroup> ProductGroups { get; }
+    DbSet<ProductGroupItem> ProductGroupItems { get; }
     DbSet<PrintFile> PrintFiles { get; }
     DbSet<PreflightLog> PreflightLogs { get; }
     DbSet<VendorFeed> VendorFeeds { get; }

@@ -21,6 +21,8 @@ public class GokturkDbContext : DbContext, IGokturkDbContext
     public DbSet<LaminationType> LaminationTypes => Set<LaminationType>();
     public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+    public DbSet<ProductGroup> ProductGroups => Set<ProductGroup>();
+    public DbSet<ProductGroupItem> ProductGroupItems => Set<ProductGroupItem>();
 
     // 2. Production Context
     public DbSet<PrintFile> PrintFiles => Set<PrintFile>();
@@ -55,6 +57,7 @@ public class GokturkDbContext : DbContext, IGokturkDbContext
         modelBuilder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
         modelBuilder.Entity<Product>().HasQueryFilter(p => !p.IsDeleted);
         modelBuilder.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
+        modelBuilder.Entity<ProductGroup>().HasQueryFilter(g => !g.IsDeleted);
 
         // Email index
         modelBuilder.Entity<User>()

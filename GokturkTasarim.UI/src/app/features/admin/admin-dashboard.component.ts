@@ -10,11 +10,12 @@ type StatusFilterType = 'ALL' | 'PENDING' | 'APPROVED' | 'PRODUCTION' | 'SHIPPED
 
 import { InvoiceService } from '../../core/services/invoice.service';
 import { InvoiceModalComponent } from '../../shared/components/invoice-modal/invoice-modal.component';
+import { ProductGroupManagementComponent } from './product-group-management/product-group-management.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, InvoiceModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, InvoiceModalComponent, ProductGroupManagementComponent],
   template: `
     <div class="admin-page">
 
@@ -39,6 +40,24 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
         </div>
+      </div>
+
+      <!-- ── Admin Section Tabs Navigation ── -->
+      <div class="admin-nav-tabs glass-card">
+        <button
+          class="admin-tab-btn"
+          [class.active]="activeAdminTab() === 'ORDERS'"
+          (click)="activeAdminTab.set('ORDERS')"
+        >
+          <i class="fa-solid fa-list-check"></i> Sipariş &amp; Talep Yönetimi
+        </button>
+        <button
+          class="admin-tab-btn"
+          [class.active]="activeAdminTab() === 'GROUPS'"
+          (click)="activeAdminTab.set('GROUPS')"
+        >
+          <i class="fa-solid fa-layer-group text-purple"></i> Ürün Grupları Yönetimi (Amazon Vitrin)
+        </button>
       </div>
 
       <!-- ── İstatistik Kartları ── -->
@@ -81,7 +100,7 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
       </div>
 
       <!-- ── Ana İçerik Grid ── -->
-      <div class="main-grid">
+      <div class="main-grid" *ngIf="activeAdminTab() === 'ORDERS'">
 
         <!-- Sol: Sipariş Tablosu -->
         <div class="glass-card order-table-card">
@@ -310,6 +329,9 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
         </div>
       </div>
 
+      <!-- ── Ürün Grupları Yönetimi Tab İçeriği ── -->
+      <app-product-group-management *ngIf="activeAdminTab() === 'GROUPS'"></app-product-group-management>
+
       <!-- ── DETAY / GENİŞLETİLMİŞ DURUM DEĞİŞTİRME MODALI ── -->
       <div class="modal-overlay" *ngIf="selectedRequest()" (click)="selectedRequest.set(null)">
         <div class="modal-box glass-card" (click)="$event.stopPropagation()">
@@ -510,6 +532,23 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
     .crb-note { font-size: 0.8rem; font-style: italic; color: var(--text-main); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: var(--radius-sm); margin: 0; }
     .crb-actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
     .admin-page { display: flex; flex-direction: column; gap: 24px; }
+
+    /* Admin Nav Tabs */
+    .admin-nav-tabs {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      background: var(--bg-card); border-radius: var(--radius-lg);
+    }
+    .admin-tab-btn {
+      padding: 10px 20px; border-radius: var(--radius-md); border: 1px solid transparent;
+      background: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .admin-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
+    .admin-tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      color: #ffffff; border-color: transparent; box-shadow: 0 4px 14px var(--primary-glow);
+    }
 
     /* ── Hero ── */
     .admin-hero {
@@ -887,6 +926,7 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
   `]
 })
 export class AdminDashboardComponent implements OnInit {
+  public activeAdminTab = signal<'ORDERS' | 'GROUPS'>('ORDERS');
   public authService = inject(AuthService);
   public invoiceService = inject(InvoiceService);
   private apiService = inject(ApiService);
