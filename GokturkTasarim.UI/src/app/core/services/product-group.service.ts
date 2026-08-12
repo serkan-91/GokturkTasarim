@@ -77,18 +77,28 @@ export class ProductGroupService {
    */
   getProductGroups(): Observable<ProductGroupPreviewDto[]> {
     return this.http.get<ProductGroupPreviewDto[]>(`${this.baseUrl}/product-groups`).pipe(
-      catchError(() => {
-        const local = localStorage.getItem('gokturk_product_groups');
-        if (local) {
-          try {
-            const parsed: AdminProductGroupDto[] = JSON.parse(local);
-            const activeOnly = parsed.filter(g => g.isActive);
-            return of(activeOnly.map(g => this.toPreviewDto(g)));
-          } catch { }
+      map(groups => {
+        if (groups && groups.length > 0) {
+          return groups;
         }
-        return of([]);
-      })
+        return this.getLocalPreviewGroups();
+      }),
+      catchError(() => of(this.getLocalPreviewGroups()))
     );
+  }
+
+  private getLocalPreviewGroups(): ProductGroupPreviewDto[] {
+    const local = localStorage.getItem('gokturk_product_groups');
+    if (local) {
+      try {
+        const parsed: AdminProductGroupDto[] = JSON.parse(local);
+        const activeOnly = parsed.filter(g => g.isActive);
+        if (activeOnly.length > 0) {
+          return activeOnly.map(g => this.toPreviewDto(g));
+        }
+      } catch { }
+    }
+    return this.mockGroups;
   }
 
   /**
