@@ -104,7 +104,6 @@ export class ProductGroupService {
 
     return this.http.get<ProductGroupDetailDto>(`${this.baseUrl}/product-groups/${encodeURIComponent(slugOrId)}`, { params }).pipe(
       catchError(() => {
-        // Fallback local calculation using real cached catalog products
         const local = localStorage.getItem('gokturk_product_groups');
         let found: AdminProductGroupDto | undefined;
 
@@ -115,49 +114,51 @@ export class ProductGroupService {
           } catch { }
         }
 
-        const pool = this.cachedCatalogProducts.length > 0 ? this.cachedCatalogProducts : this.mockProducts;
-        let allGroupProds: ProductDto[] = [];
+        const ensureProducts$ = this.cachedCatalogProducts.length > 0 
+          ? of(this.cachedCatalogProducts) 
+          : this.getAllProducts().pipe(catchError(() => of(this.mockProducts)));
 
-        if (found && found.productIds && found.productIds.length > 0) {
-          const mapById = new Map(pool.map(p => [p.id, p]));
-          allGroupProds = found.productIds
-            .map(id => mapById.get(id))
-            .filter((p): p is ProductDto => p !== undefined);
-        }
+        return ensureProducts$.pipe(
+          map(pool => {
+            let allGroupProds: ProductDto[] = [];
+            if (found && found.productIds && found.productIds.length > 0) {
+              const mapById = new Map(pool.map(p => [p.id, p]));
+              allGroupProds = found.productIds
+                .map(id => mapById.get(id))
+                .filter((p): p is ProductDto => p !== undefined);
+            }
 
-        if (allGroupProds.length === 0) {
-          allGroupProds = pool;
-        }
+            if (search) {
+              const s = search.toLowerCase();
+              allGroupProds = allGroupProds.filter(p =>
+                p.name.toLowerCase().includes(s) ||
+                p.productCode.toLowerCase().includes(s) ||
+                (p.description && p.description.toLowerCase().includes(s))
+              );
+            }
 
-        if (search) {
-          const s = search.toLowerCase();
-          allGroupProds = allGroupProds.filter(p =>
-            p.name.toLowerCase().includes(s) ||
-            p.productCode.toLowerCase().includes(s) ||
-            (p.description && p.description.toLowerCase().includes(s))
-          );
-        }
+            const totalCount = allGroupProds.length;
+            const startIndex = (page - 1) * pageSize;
+            const pagedItems = allGroupProds.slice(startIndex, startIndex + pageSize);
+            const hasNextPage = (page * pageSize) < totalCount;
 
-        const totalCount = allGroupProds.length;
-        const startIndex = (page - 1) * pageSize;
-        const pagedItems = allGroupProds.slice(startIndex, startIndex + pageSize);
-        const hasNextPage = (page * pageSize) < totalCount;
-
-        return of({
-          id: found ? found.id : 'g-1',
-          name: found ? found.name : 'Ürün Grubu',
-          slug: found ? found.slug : slugOrId,
-          description: found ? found.description : '',
-          icon: found ? found.icon : 'fa-solid fa-layer-group',
-          displayOrder: found ? found.displayOrder : 1,
-          products: {
-            items: pagedItems,
-            totalCount,
-            page,
-            pageSize,
-            hasNextPage
-          }
-        });
+            return {
+              id: found ? found.id : 'g-1',
+              name: found ? found.name : 'Ürün Grubu',
+              slug: found ? found.slug : slugOrId,
+              description: found ? found.description : '',
+              icon: found ? found.icon : 'fa-solid fa-layer-group',
+              displayOrder: found ? found.displayOrder : 1,
+              products: {
+                items: pagedItems,
+                totalCount,
+                page,
+                pageSize,
+                hasNextPage
+              }
+            };
+          })
+        );
       })
     );
   }
