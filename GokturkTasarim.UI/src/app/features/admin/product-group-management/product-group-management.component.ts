@@ -1,9 +1,9 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProductGroupService } from '../../../core/services/product-group.service';
-import { AdminProductGroupDto, ProductDto, CreateProductGroupDto } from '../../../core/models/product-group.model';
+import { AdminProductGroupDto, ProductDto } from '../../../core/models/product-group.model';
 
 @Component({
   selector: 'app-product-group-management',
@@ -184,19 +184,61 @@ import { AdminProductGroupDto, ProductDto, CreateProductGroupDto } from '../../.
                 />
               </div>
 
-              <!-- Product Selection Section -->
+              <!-- Product Selection Section with Pagination (20, 30, 50, 100 Sayfalama) -->
               <div class="form-group span-2 product-picker-section">
-                <div class="picker-header">
-                  <label><i class="fa-solid fa-boxes-stacked"></i> Gruba Dâhil Edilecek Ürünler ({{ selectedProductIds.length }} Seçildi)</label>
-                  <div class="p-search">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Ürün ara..." [(ngModel)]="productSearch" />
+                
+                <div class="picker-header-bar">
+                  <div class="picker-title-wrap">
+                    <label><i class="fa-solid fa-boxes-stacked"></i> Gruba Dâhil Edilecek Ürünler</label>
+                    <span class="selected-badge">{{ selectedProductIds.length }} Ürün Seçildi</span>
+                  </div>
+
+                  <div class="picker-actions-top">
+                    <button type="button" class="btn-picker-action" (click)="selectAllOnPage()" title="Bu Sayfadaki Tümünü Seç">
+                      <i class="fa-solid fa-square-check"></i> Sayfayı Seç
+                    </button>
+                    <button type="button" class="btn-picker-action" (click)="deselectAllOnPage()" title="Bu Sayfadaki Seçimleri Kaldır">
+                      <i class="fa-solid fa-square-minus"></i> Sayfayı Kaldır
+                    </button>
+                    <button type="button" class="btn-picker-action btn-danger-link" (click)="clearAllSelections()" title="Tüm Seçimleri Sıfırla">
+                      <i class="fa-solid fa-trash-can"></i> Temizle
+                    </button>
                   </div>
                 </div>
 
+                <!-- Filter & Search Toolbar -->
+                <div class="picker-filter-toolbar">
+                  <div class="p-search-input">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Ürün adı veya kodunda ara..." [(ngModel)]="productSearch" (ngModelChange)="pickerPage = 1" />
+                  </div>
+
+                  <div class="p-category-select">
+                    <select class="picker-select" [(ngModel)]="selectedCategoryFilter" (change)="pickerPage = 1">
+                      <option value="">Tüm Kategoriler</option>
+                      <option *ngFor="let cat of availableCategories()" [value]="cat">{{ cat }}</option>
+                    </select>
+                  </div>
+
+                  <div class="p-page-size">
+                    <label>Sayfa Başına:</label>
+                    <select class="picker-select" [(ngModel)]="pickerPageSize" (change)="pickerPage = 1">
+                      <option [ngValue]="20">20 Ürün</option>
+                      <option [ngValue]="30">30 Ürün</option>
+                      <option [ngValue]="50">50 Ürün</option>
+                      <option [ngValue]="100">100 Ürün</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Products List Box -->
                 <div class="products-list-box">
+                  <div *ngIf="paginatedProducts().length === 0" class="empty-picker-msg">
+                    <i class="fa-solid fa-box-open"></i> Arama veya filtreye uygun ürün bulunamadı.
+                  </div>
+
                   <div
-                    *ngFor="let p of filteredProducts()"
+                    *ngFor="let p of paginatedProducts()"
                     class="prod-item"
                     [class.selected]="isProductSelected(p.id)"
                     (click)="toggleProductSelection(p.id)"
@@ -210,6 +252,24 @@ import { AdminProductGroupDto, ProductDto, CreateProductGroupDto } from '../../.
                     </div>
                   </div>
                 </div>
+
+                <!-- Pagination Bar -->
+                <div class="picker-pagination-bar" *ngIf="filteredProducts().length > 0">
+                  <span class="pagination-info">
+                    Toplam {{ filteredProducts().length }} üründen {{ (pickerPage - 1) * pickerPageSize + 1 }} - {{ getMathMin(pickerPage * pickerPageSize, filteredProducts().length) }} gösteriliyor
+                  </span>
+
+                  <div class="pagination-controls">
+                    <button type="button" class="page-nav-btn" [disabled]="pickerPage === 1" (click)="pickerPage = pickerPage - 1">
+                      <i class="fa-solid fa-chevron-left"></i> Önceki
+                    </button>
+                    <span class="page-indicator">Sayfa {{ pickerPage }} / {{ totalPickerPages() }}</span>
+                    <button type="button" class="page-nav-btn" [disabled]="pickerPage >= totalPickerPages()" (click)="pickerPage = pickerPage + 1">
+                      Sonraki <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
             </div>
@@ -314,7 +374,7 @@ import { AdminProductGroupDto, ProductDto, CreateProductGroupDto } from '../../.
       display: flex; align-items: center; justify-content: center; padding: 20px;
     }
     .modal-card {
-      width: 100%; max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;
+      width: 100%; max-width: 840px; max-height: 92vh; display: flex; flex-direction: column;
       border-radius: var(--radius-xl); overflow: hidden; animation: zoomIn 0.2s ease;
     }
     @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -365,40 +425,86 @@ import { AdminProductGroupDto, ProductDto, CreateProductGroupDto } from '../../.
     .switch-lbl input:checked + .slider::after { transform: translateX(20px); }
     .switch-txt { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
 
-    /* Product Picker */
+    /* Product Picker Section */
     .product-picker-section {
       margin-top: 8px; border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
-      padding: 16px; background: rgba(0,0,0,0.1);
+      padding: 18px; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px;
     }
-    .picker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
-    .p-search { position: relative; display: flex; align-items: center; }
-    .p-search i { position: absolute; left: 10px; font-size: 0.75rem; color: var(--text-dim); }
-    .p-search input {
-      padding: 6px 10px 6px 30px; font-size: 0.78rem; background: var(--bg-card);
+    .picker-header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .picker-title-wrap { display: flex; align-items: center; gap: 12px; }
+    .selected-badge {
+      font-size: 0.75rem; font-weight: 800; color: var(--accent-emerald);
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      padding: 3px 10px; border-radius: 99px;
+    }
+    .picker-actions-top { display: flex; align-items: center; gap: 8px; }
+    .btn-picker-action {
+      padding: 5px 10px; border-radius: 6px; border: 1px solid var(--glass-border);
+      background: var(--bg-card); color: var(--text-muted); font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn-picker-action:hover { background: rgba(99,102,241,0.15); color: var(--primary); border-color: var(--primary); }
+    .btn-danger-link:hover { background: rgba(239,68,68,0.15); color: var(--status-danger); border-color: var(--status-danger); }
+
+    /* Filter Toolbar */
+    .picker-filter-toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border: 1px solid var(--glass-border);
+    }
+    .p-search-input { position: relative; display: flex; align-items: center; flex: 1; min-width: 200px; }
+    .p-search-input i { position: absolute; left: 10px; font-size: 0.78rem; color: var(--text-dim); }
+    .p-search-input input {
+      width: 100%; padding: 7px 10px 7px 32px; font-size: 0.8rem; background: var(--bg-card);
+      border: 1px solid var(--glass-border); border-radius: var(--radius-sm); color: var(--text-main); outline: none;
+    }
+    .p-search-input input:focus { border-color: var(--primary); }
+
+    .p-category-select, .p-page-size { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-muted); }
+    .picker-select {
+      padding: 6px 10px; font-size: 0.78rem; background: var(--bg-card);
       border: 1px solid var(--glass-border); border-radius: var(--radius-sm); color: var(--text-main); outline: none;
     }
 
     .products-list-box {
-      max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
+      min-height: 180px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
       padding-right: 4px;
     }
+    .empty-picker-msg {
+      padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
     .prod-item {
-      display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
       background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius-md);
       cursor: pointer; transition: all 0.15s;
     }
-    .prod-item:hover { border-color: var(--primary); }
-    .prod-item.selected { background: rgba(99,102,241,0.12); border-color: var(--primary); }
+    .prod-item:hover { border-color: var(--primary); background: rgba(255,255,255,0.04); }
+    .prod-item.selected { background: rgba(99,102,241,0.14); border-color: var(--primary); }
 
     .check-box {
-      width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--glass-border);
-      display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem; flex-shrink: 0;
+      width: 20px; height: 20px; border-radius: 4px; border: 1.5px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.72rem; flex-shrink: 0;
     }
     .prod-item.selected .check-box { background: var(--primary); border-color: var(--primary); }
 
     .prod-info { display: flex; flex-direction: column; gap: 2px; }
-    .prod-info strong { font-size: 0.82rem; }
-    .p-code { font-size: 0.72rem; color: var(--text-muted); }
+    .prod-info strong { font-size: 0.85rem; color: var(--text-main); }
+    .p-code { font-size: 0.74rem; color: var(--text-muted); }
+
+    /* Pagination Bar */
+    .picker-pagination-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding-top: 10px; border-top: 1px solid var(--glass-border); flex-wrap: wrap;
+    }
+    .pagination-info { font-size: 0.76rem; color: var(--text-muted); }
+    .pagination-controls { display: flex; align-items: center; gap: 10px; }
+    .page-nav-btn {
+      padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 6px;
+      border: 1px solid var(--glass-border); background: var(--bg-card); color: var(--text-main);
+      cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .page-nav-btn:hover:not([disabled]) { border-color: var(--primary); color: var(--primary); }
+    .page-nav-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .page-indicator { font-size: 0.78rem; font-weight: 700; color: var(--primary); }
 
     .modal-footer {
       padding: 16px 24px; border-top: 1px solid var(--glass-border);
@@ -418,6 +524,9 @@ export class ProductGroupManagementComponent implements OnInit {
 
   public selectedProductIds: string[] = [];
   public productSearch = '';
+  public selectedCategoryFilter = '';
+  public pickerPage = 1;
+  public pickerPageSize = 20;
 
   public formData = {
     name: '',
@@ -458,6 +567,9 @@ export class ProductGroupManagementComponent implements OnInit {
       isActive: true
     };
     this.selectedProductIds = [];
+    this.productSearch = '';
+    this.selectedCategoryFilter = '';
+    this.pickerPage = 1;
     this.showModal.set(true);
   }
 
@@ -472,6 +584,9 @@ export class ProductGroupManagementComponent implements OnInit {
       isActive: g.isActive
     };
     this.selectedProductIds = [...(g.productIds || [])];
+    this.productSearch = '';
+    this.selectedCategoryFilter = '';
+    this.pickerPage = 1;
     this.showModal.set(true);
   }
 
@@ -483,6 +598,40 @@ export class ProductGroupManagementComponent implements OnInit {
     if (!this.editingId()) {
       this.formData.slug = this.slugify(this.formData.name);
     }
+  }
+
+  public availableCategories = computed(() => {
+    const cats = this.allProducts()
+      .map(p => p.category)
+      .filter((c, i, a) => c && a.indexOf(c) === i);
+    return cats.sort();
+  });
+
+  public filteredProducts(): ProductDto[] {
+    let list = this.allProducts();
+    if (this.selectedCategoryFilter) {
+      list = list.filter(p => p.category === this.selectedCategoryFilter);
+    }
+    if (this.productSearch) {
+      const s = this.productSearch.toLowerCase().trim();
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(s) ||
+        p.productCode.toLowerCase().includes(s) ||
+        p.category.toLowerCase().includes(s)
+      );
+    }
+    return list;
+  }
+
+  public totalPickerPages(): number {
+    const total = this.filteredProducts().length;
+    return Math.max(1, Math.ceil(total / this.pickerPageSize));
+  }
+
+  public paginatedProducts(): ProductDto[] {
+    const list = this.filteredProducts();
+    const start = (this.pickerPage - 1) * this.pickerPageSize;
+    return list.slice(start, start + this.pickerPageSize);
   }
 
   public isProductSelected(id: string): boolean {
@@ -497,14 +646,26 @@ export class ProductGroupManagementComponent implements OnInit {
     }
   }
 
-  public filteredProducts(): ProductDto[] {
-    if (!this.productSearch) return this.allProducts();
-    const s = this.productSearch.toLowerCase();
-    return this.allProducts().filter(p =>
-      p.name.toLowerCase().includes(s) ||
-      p.productCode.toLowerCase().includes(s) ||
-      p.category.toLowerCase().includes(s)
-    );
+  public selectAllOnPage() {
+    const pageProds = this.paginatedProducts();
+    for (const p of pageProds) {
+      if (!this.selectedProductIds.includes(p.id)) {
+        this.selectedProductIds.push(p.id);
+      }
+    }
+  }
+
+  public deselectAllOnPage() {
+    const pageIds = new Set(this.paginatedProducts().map(p => p.id));
+    this.selectedProductIds = this.selectedProductIds.filter(id => !pageIds.has(id));
+  }
+
+  public clearAllSelections() {
+    this.selectedProductIds = [];
+  }
+
+  public getMathMin(a: number, b: number): number {
+    return Math.min(a, b);
   }
 
   public saveGroup() {

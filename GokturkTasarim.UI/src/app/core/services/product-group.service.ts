@@ -168,7 +168,7 @@ export class ProductGroupService {
    * Get all products for Admin Group Selection
    */
   getAllProducts(): Observable<ProductDto[]> {
-    return this.http.get<any>(`${this.baseUrl}/catalog/products?page=1&pageSize=100`).pipe(
+    return this.http.get<any>(`${this.baseUrl}/catalog/products?page=1&pageSize=1000`).pipe(
       map(res => res.items || res),
       catchError(() => of(this.mockProducts))
     );

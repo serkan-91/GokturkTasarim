@@ -117,7 +117,7 @@ import { ProductGroupDetailDto, ProductDto } from '../../core/models/product-gro
         </div>
       </div>
 
-      <!-- Infinite Scroll Loading Indicator (24'erli sonsuz kaydırma) -->
+      <!-- Infinite Scroll Loading Indicator & Load More Button -->
       <div class="scroll-loader-wrap" *ngIf="loadingMore()">
         <div class="loader-spinner">
           <i class="fa-solid fa-circle-notch fa-spin"></i>
@@ -125,8 +125,14 @@ import { ProductGroupDetailDto, ProductDto } from '../../core/models/product-gro
         <span>Sonraki 24 ürün yükleniyor...</span>
       </div>
 
+      <div class="load-more-btn-wrap" *ngIf="hasNextPage() && !loadingMore() && !loading()">
+        <button class="btn btn-outline-cyan btn-lg" (click)="loadNextBatch()">
+          <i class="fa-solid fa-arrow-down"></i> Daha Fazla Ürün Göster (+24 Ürün)
+        </button>
+      </div>
+
       <!-- End of Catalog Message -->
-      <div class="end-catalog-msg" *ngIf="!hasNextPage() && products().length > 0 && !loadingMore()">
+      <div class="end-catalog-msg" *ngIf="!hasNextPage() && products().length > 0 && !loadingMore() && !loading()">
         <i class="fa-solid fa-circle-check text-emerald"></i>
         <span>Gruba ait tüm ürünler (toplam {{ totalCount() }} ürün) görüntülendi.</span>
       </div>
@@ -479,6 +485,13 @@ export class ProductGroupDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  public loadNextBatch() {
+    if (this.hasNextPage() && !this.loadingMore() && !this.isFetching) {
+      const nextPage = this.currentPage() + 1;
+      this.fetchBatch(this.currentSlug, nextPage, true);
+    }
+  }
+
   @HostListener('window:scroll', [])
   onWindowScroll() {
     if (this.loading() || this.loadingMore() || !this.hasNextPage() || this.isFetching) {
@@ -489,12 +502,13 @@ export class ProductGroupDetailComponent implements OnInit, OnDestroy {
     const max = document.documentElement.scrollHeight - 350; // trigger 350px before bottom
 
     if (pos >= max) {
-      const nextPage = this.currentPage() + 1;
-      this.fetchBatch(this.currentSlug, nextPage, true);
+      this.loadNextBatch();
     }
   }
 
-  onImgError(event: any) {
-    event.target.src = '/banner.png';
+  onImgError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.onerror = null;
+    img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"><rect width="300" height="200" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="sans-serif" font-size="14">Göktürk Baskı</text></svg>';
   }
 }

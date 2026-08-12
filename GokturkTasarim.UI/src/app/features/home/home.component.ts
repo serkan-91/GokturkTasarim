@@ -583,7 +583,9 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  onImgError(event: any) {
-    event.target.src = '/banner.png';
+  onImgError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.onerror = null;
+    img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"><rect width="300" height="200" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="sans-serif" font-size="14">Göktürk Baskı</text></svg>';
   }
 }
