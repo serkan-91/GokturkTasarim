@@ -39,9 +39,10 @@ public class GetProductGroupDetailQueryHandler : IRequestHandler<GetProductGroup
     {
         bool isGuid = Guid.TryParse(request.SlugOrId, out var groupGuid);
 
+        var slugLower = request.SlugOrId.Trim().ToLower();
         var group = await _db.ProductGroups
             .AsNoTracking()
-            .Where(g => g.IsActive && (g.Slug == request.SlugOrId || (isGuid && g.Id == groupGuid)))
+            .Where(g => g.Slug.ToLower() == slugLower || g.Slug == request.SlugOrId || (isGuid && g.Id == groupGuid))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (group == null)
