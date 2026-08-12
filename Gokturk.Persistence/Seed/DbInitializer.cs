@@ -81,29 +81,16 @@ public static class DbInitializer
 
             await db.Products.AddRangeAsync(products);
         }
-        else
+        // Clear any stock unsplash URLs from products so real XML images render cleanly
+        var stockImgProducts = await db.Products.Where(p => p.ImageUrl != null && p.ImageUrl.Contains("unsplash.com")).ToListAsync();
+        if (stockImgProducts.Count > 0)
         {
-            // Ensure existing products without ImageUrl get updated with valid default images
-            var productsWithoutImg = await db.Products.Where(p => string.IsNullOrEmpty(p.ImageUrl)).ToListAsync();
-            if (productsWithoutImg.Count > 0)
+            foreach (var p in stockImgProducts)
             {
-                foreach (var p in productsWithoutImg)
-                {
-                    if (p.Category.Contains("Kartvizit", StringComparison.OrdinalIgnoreCase))
-                        p.ImageUrl = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80";
-                    else if (p.Category.Contains("Broşür", StringComparison.OrdinalIgnoreCase))
-                        p.ImageUrl = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80";
-                    else if (p.Category.Contains("Tabela", StringComparison.OrdinalIgnoreCase))
-                        p.ImageUrl = "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80";
-                    else if (p.Category.Contains("Promosyon", StringComparison.OrdinalIgnoreCase))
-                        p.ImageUrl = "https://images.unsplash.com/photo-1585336261026-8f5786372969?auto=format&fit=crop&w=600&q=80";
-                    else
-                        p.ImageUrl = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80";
-                }
+                p.ImageUrl = null;
             }
+            await db.SaveChangesAsync();
         }
-
-        await db.SaveChangesAsync();
 
         // 4. Seed Sample Reviews if empty
         if (!await db.ProductReviews.AnyAsync())

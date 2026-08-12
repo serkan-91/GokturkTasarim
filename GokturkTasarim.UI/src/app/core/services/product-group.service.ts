@@ -56,6 +56,8 @@ export class ProductGroupService {
     }
   ];
 
+  private cachedCatalogProducts: ProductDto[] = [];
+
   get onGroupsUpdated(): Observable<boolean> {
     return this.groupsUpdated$.asObservable();
   }
@@ -96,39 +98,27 @@ export class ProductGroupService {
 
     return this.http.get<ProductGroupDetailDto>(`${this.baseUrl}/product-groups/${encodeURIComponent(slugOrId)}`, { params }).pipe(
       catchError(() => {
-        // Fallback local calculation
+        // Fallback local calculation using real cached catalog products
         const local = localStorage.getItem('gokturk_product_groups');
-        let groupPreview = this.mockGroups.find(g => g.slug === slugOrId || g.id === slugOrId);
+        let found: AdminProductGroupDto | undefined;
 
         if (local) {
           try {
             const parsed: AdminProductGroupDto[] = JSON.parse(local);
-            const found = parsed.find(g => g.slug === slugOrId || g.id === slugOrId);
-            if (found) {
-              groupPreview = this.toPreviewDto(found);
-            }
+            found = parsed.find(g => g.slug === slugOrId || g.id === slugOrId);
           } catch { }
         }
 
-        if (!groupPreview) {
-          groupPreview = this.mockGroups[0];
+        const pool = this.cachedCatalogProducts.length > 0 ? this.cachedCatalogProducts : this.mockProducts;
+        let allGroupProds: ProductDto[] = [];
+
+        if (found && found.productIds && found.productIds.length > 0) {
+          const idSet = new Set(found.productIds);
+          allGroupProds = pool.filter(p => idSet.has(p.id));
         }
 
-        let allGroupProds = [...(groupPreview.previewProducts || [])];
-        // Duplicate products to simulate a catalog for testing 24-item infinite scroll if count is small
-        if (allGroupProds.length < 30) {
-          const generated: ProductDto[] = [];
-          for (let i = 1; i <= 48; i++) {
-            const base = allGroupProds[(i - 1) % allGroupProds.length];
-            generated.push({
-              ...base,
-              id: `${base.id}-${i}`,
-              productCode: `${base.productCode}-${i}`,
-              name: `${base.name} (Varyant ${i})`,
-              basePrice: Math.round(base.basePrice * (1 + (i % 5) * 0.05))
-            });
-          }
-          allGroupProds = generated;
+        if (allGroupProds.length === 0) {
+          allGroupProds = pool;
         }
 
         if (search) {
@@ -136,7 +126,7 @@ export class ProductGroupService {
           allGroupProds = allGroupProds.filter(p =>
             p.name.toLowerCase().includes(s) ||
             p.productCode.toLowerCase().includes(s) ||
-            p.description.toLowerCase().includes(s)
+            (p.description && p.description.toLowerCase().includes(s))
           );
         }
 
@@ -146,12 +136,12 @@ export class ProductGroupService {
         const hasNextPage = (page * pageSize) < totalCount;
 
         return of({
-          id: groupPreview.id,
-          name: groupPreview.name,
-          slug: groupPreview.slug,
-          description: groupPreview.description,
-          icon: groupPreview.icon,
-          displayOrder: groupPreview.displayOrder,
+          id: found ? found.id : 'g-1',
+          name: found ? found.name : 'Ürün Grubu',
+          slug: found ? found.slug : slugOrId,
+          description: found ? found.description : '',
+          icon: found ? found.icon : 'fa-solid fa-layer-group',
+          displayOrder: found ? found.displayOrder : 1,
           products: {
             items: pagedItems,
             totalCount,
@@ -169,8 +159,14 @@ export class ProductGroupService {
    */
   getAllProducts(): Observable<ProductDto[]> {
     return this.http.get<any>(`${this.baseUrl}/catalog/products?page=1&pageSize=1000`).pipe(
-      map(res => res.items || res),
-      catchError(() => of(this.mockProducts))
+      map(res => {
+        const items = res.items || res;
+        if (Array.isArray(items) && items.length > 0) {
+          this.cachedCatalogProducts = items;
+        }
+        return items;
+      }),
+      catchError(() => of(this.cachedCatalogProducts.length > 0 ? this.cachedCatalogProducts : this.mockProducts))
     );
   }
 
@@ -280,7 +276,9 @@ export class ProductGroupService {
   }
 
   private toPreviewDto(admin: AdminProductGroupDto): ProductGroupPreviewDto {
-    const matchedProds = this.mockProducts.filter(p => admin.productIds.includes(p.id));
+    const pool = this.cachedCatalogProducts.length > 0 ? this.cachedCatalogProducts : this.mockProducts;
+    const idSet = new Set(admin.productIds || []);
+    const matchedProds = pool.filter(p => idSet.has(p.id));
     return {
       id: admin.id,
       name: admin.name,
@@ -289,7 +287,7 @@ export class ProductGroupService {
       icon: admin.icon,
       displayOrder: admin.displayOrder,
       totalProductsCount: admin.productCount || matchedProds.length,
-      previewProducts: matchedProds.length > 0 ? matchedProds.slice(0, 5) : this.mockProducts.slice(0, 5)
+      previewProducts: matchedProds.length > 0 ? matchedProds.slice(0, 4) : pool.slice(0, 4)
     };
   }
 
