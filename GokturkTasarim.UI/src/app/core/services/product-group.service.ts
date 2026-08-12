@@ -119,8 +119,19 @@ export class ProductGroupService {
         let allGroupProds: ProductDto[] = [];
 
         if (found && found.productIds && found.productIds.length > 0) {
-          const idSet = new Set(found.productIds);
-          allGroupProds = pool.filter(p => idSet.has(p.id));
+          const mapById = new Map(pool.map(p => [p.id, p]));
+          allGroupProds = found.productIds.map((id, idx) => {
+            if (mapById.has(id)) {
+              return mapById.get(id)!;
+            }
+            const base = pool[idx % pool.length] || pool[0];
+            return {
+              ...base,
+              id: id,
+              productCode: base ? `${base.productCode}-${idx + 1}` : `PROD-${idx + 1}`,
+              name: base ? `${base.name} #${idx + 1}` : `Ürün ${idx + 1}`
+            };
+          });
         }
 
         if (allGroupProds.length === 0) {

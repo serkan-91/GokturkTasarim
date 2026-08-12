@@ -49,7 +49,7 @@ public class GetProductGroupDetailQueryHandler : IRequestHandler<GetProductGroup
 
         var itemsQuery = _db.ProductGroupItems
             .AsNoTracking()
-            .Where(i => i.ProductGroupId == group.Id && i.Product.IsActive && !i.Product.IsDeleted);
+            .Where(i => i.ProductGroupId == group.Id && !i.Product.IsDeleted);
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
