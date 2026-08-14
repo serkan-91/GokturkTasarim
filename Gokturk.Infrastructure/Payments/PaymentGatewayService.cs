@@ -93,7 +93,7 @@ public class PaymentGatewayService : IPaymentGatewayService
             var merchantId = payTrSection["MerchantId"] ?? "736442";
             var merchantKey = payTrSection["MerchantKey"] ?? "9rXzsrN7DkA91Wkf";
             var merchantSalt = payTrSection["MerchantSalt"] ?? "EN5i1zpnJYZi17Kk";
-            var testMode = payTrSection["TestMode"] ?? "0";
+            var testMode = payTrSection["TestMode"] ?? "1";
             var okUrl = payTrSection["OkUrl"] ?? "https://gokturkpromosyon.com/odeme-basarili";
             var failUrl = payTrSection["FailUrl"] ?? "https://gokturkpromosyon.com/odeme-basarisiz";
 
