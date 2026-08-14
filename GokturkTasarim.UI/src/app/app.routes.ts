@@ -54,6 +54,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/legal/legal.component').then(m => m.LegalComponent)
       },
       {
+        path: 'odeme-basarili',
+        loadComponent: () => import('./features/payment/payment-success.component').then(m => m.PaymentSuccessComponent)
+      },
+      {
+        path: 'odeme-basarisiz',
+        loadComponent: () => import('./features/payment/payment-fail.component').then(m => m.PaymentFailComponent)
+      },
+      {
         path: 'group/:slug',
         loadComponent: () => import('./features/product-group/product-group-detail.component').then(m => m.ProductGroupDetailComponent)
       },

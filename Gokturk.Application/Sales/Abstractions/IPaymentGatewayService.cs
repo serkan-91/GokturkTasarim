@@ -11,7 +11,8 @@ public record CreatePayTrTokenRequestDto(
     string CustomerEmail,
     string CustomerPhone,
     string CustomerAddress,
-    List<PayTrBasketItemDto> BasketItems
+    List<PayTrBasketItemDto> BasketItems,
+    string? UserIp = null
 );
 
 public record PayTrBasketItemDto(
@@ -25,6 +26,18 @@ public record PayTrTokenResultDto(
     string? Token,
     string? IframeUrl,
     string? ErrorMessage
+);
+
+public record PayTrCallbackRequestDto(
+    string MerchantOid,
+    string Status,
+    string TotalAmount,
+    string Hash,
+    string? FailedReasonCode = null,
+    string? FailedReasonMsg = null,
+    string? TestMode = null,
+    string? PaymentType = null,
+    string? Currency = null
 );
 
 public record CreateBankTransferPaymentRequestDto(
@@ -51,6 +64,7 @@ public record BankTransferPaymentResultDto(
 public interface IPaymentGatewayService
 {
     Task<PayTrTokenResultDto> CreatePayTrPaymentTokenAsync(CreatePayTrTokenRequestDto request);
+    bool ValidatePayTrCallback(PayTrCallbackRequestDto callback);
     Task<BankTransferPaymentResultDto> ProcessBankTransferAsync(CreateBankTransferPaymentRequestDto request);
     List<BankAccountInfo> GetCorporateBankAccounts();
 }

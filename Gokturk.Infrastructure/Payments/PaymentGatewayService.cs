@@ -1,8 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Gokturk.Application.Sales.Abstractions;
 using Gokturk.Domain.Sales.Entities;
 
@@ -10,6 +15,10 @@ namespace Gokturk.Infrastructure.Payments;
 
 public class PaymentGatewayService : IPaymentGatewayService
 {
+    private readonly IConfiguration _configuration;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<PaymentGatewayService> _logger;
+
     private static readonly List<BankAccountInfo> BankAccounts = new()
     {
         new BankAccountInfo
@@ -37,6 +46,16 @@ public class PaymentGatewayService : IPaymentGatewayService
             LogoUrl = "https://www.isbank.com.tr/staticimages/isbank_logo.png"
         }
     };
+
+    public PaymentGatewayService(
+        IConfiguration configuration,
+        IHttpClientFactory httpClientFactory,
+        ILogger<PaymentGatewayService> logger)
+    {
+        _configuration = configuration;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+    }
 
     public List<BankAccountInfo> GetCorporateBankAccounts()
     {
@@ -66,31 +85,182 @@ public class PaymentGatewayService : IPaymentGatewayService
         return Task.FromResult(result);
     }
 
-    public Task<PayTrTokenResultDto> CreatePayTrPaymentTokenAsync(CreatePayTrTokenRequestDto request)
+    public async Task<PayTrTokenResultDto> CreatePayTrPaymentTokenAsync(CreatePayTrTokenRequestDto request)
     {
-        // PayTR Merchant Credentials (Configurable)
-        var merchantId = "384912";
-        var merchantKey = "GokturkPayTrKey2026";
-        var merchantSalt = "GokturkPayTrSalt2026";
+        try
+        {
+            var payTrSection = _configuration.GetSection("PayTR");
+            var merchantId = payTrSection["MerchantId"] ?? "736442";
+            var merchantKey = payTrSection["MerchantKey"] ?? "";
+            var merchantSalt = payTrSection["MerchantSalt"] ?? "";
+            var testMode = payTrSection["TestMode"] ?? "1";
+            var okUrl = payTrSection["OkUrl"] ?? "https://gokturkpromosyon.com/odeme-basarili";
+            var failUrl = payTrSection["FailUrl"] ?? "https://gokturkpromosyon.com/odeme-basarisiz";
 
-        var userIp = "127.0.0.1";
-        var merchantOid = request.OrderNumber;
-        var email = string.IsNullOrWhiteSpace(request.CustomerEmail) ? "musteri@gokturk.com" : request.CustomerEmail;
-        var paymentAmount = ((int)(request.Amount * 100)).ToString(); // Kuruş cinsinden
+            var userIp = string.IsNullOrWhiteSpace(request.UserIp) || request.UserIp == "::1" || request.UserIp == "127.0.0.1"
+                ? "127.0.0.1"
+                : request.UserIp;
 
-        // Create PayTR Token Signature
-        var hashStr = $"{merchantId}{userIp}{merchantOid}{email}{paymentAmount}basket{merchantSalt}";
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(merchantKey));
-        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(hashStr));
-        var payTrToken = Convert.ToBase64String(hashBytes);
+            // PayTR strictly requires merchant_oid to be alphanumeric without hyphens or special chars
+            var rawOid = string.IsNullOrWhiteSpace(request.OrderNumber) ? $"GKT{DateTime.UtcNow:yyyyMMddHHmmss}" : request.OrderNumber;
+            var merchantOid = System.Text.RegularExpressions.Regex.Replace(rawOid, "[^a-zA-Z0-9]", "");
+            if (string.IsNullOrWhiteSpace(merchantOid))
+            {
+                merchantOid = $"GKT{DateTime.UtcNow.Ticks}";
+            }
 
-        var result = new PayTrTokenResultDto(
-            Success: true,
-            Token: payTrToken,
-            IframeUrl: $"https://www.paytr.com/odeme/api/{payTrToken}",
-            ErrorMessage: null
-        );
+            var email = string.IsNullOrWhiteSpace(request.CustomerEmail) ? "musteri@gokturktasarim.com" : request.CustomerEmail;
+            var userName = string.IsNullOrWhiteSpace(request.CustomerName) ? "Müşteri" : request.CustomerName;
+            var userAddress = string.IsNullOrWhiteSpace(request.CustomerAddress) ? "İstanbul" : request.CustomerAddress;
+            var userPhone = string.IsNullOrWhiteSpace(request.CustomerPhone) ? "05000000000" : request.CustomerPhone;
 
-        return Task.FromResult(result);
+            // Kuruş cinsinden tutar (Örn: 100.50 TL -> 10050)
+            var paymentAmount = ((int)Math.Round(request.Amount * 100, MidpointRounding.AwayFromZero)).ToString();
+
+            // Sepet oluşturma (JSON format: [ ["Ürün Adı", "Fiyat", Adet], ... ])
+            var basketList = new List<object[]>();
+            if (request.BasketItems != null && request.BasketItems.Count > 0)
+            {
+                foreach (var item in request.BasketItems)
+                {
+                    basketList.Add(new object[]
+                    {
+                        item.Name,
+                        item.Price.ToString("0.00", CultureInfo.InvariantCulture),
+                        item.Quantity
+                    });
+                }
+            }
+            else
+            {
+                basketList.Add(new object[]
+                {
+                    "Göktürk Tasarım Siparişi",
+                    request.Amount.ToString("0.00", CultureInfo.InvariantCulture),
+                    1
+                });
+            }
+
+            var basketJson = JsonSerializer.Serialize(basketList);
+            var userBasketBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(basketJson));
+
+            var currency = "TL";
+            var noInstallment = "0";
+            var maxInstallment = "0";
+            var timeoutLimit = "30";
+            var debugOn = "1";
+
+            // Hash String Format: merchant_id + user_ip + merchant_oid + email + payment_amount + user_basket + no_installment + max_installment + currency + test_mode + merchant_salt
+            var hashStr = $"{merchantId}{userIp}{merchantOid}{email}{paymentAmount}{userBasketBase64}{noInstallment}{maxInstallment}{currency}{testMode}{merchantSalt}";
+
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(merchantKey));
+            var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(hashStr));
+            var payTrToken = Convert.ToBase64String(hashBytes);
+
+            var postData = new Dictionary<string, string>
+            {
+                { "merchant_id", merchantId },
+                { "user_ip", userIp },
+                { "merchant_oid", merchantOid },
+                { "email", email },
+                { "payment_amount", paymentAmount },
+                { "paytr_token", payTrToken },
+                { "user_basket", userBasketBase64 },
+                { "user_name", userName },
+                { "user_address", userAddress },
+                { "user_phone", userPhone },
+                { "merchant_ok_url", okUrl },
+                { "merchant_fail_url", failUrl },
+                { "timeout_limit", timeoutLimit },
+                { "currency", currency },
+                { "test_mode", testMode },
+                { "no_installment", noInstallment },
+                { "max_installment", maxInstallment },
+                { "debug_on", debugOn }
+            };
+
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(20);
+
+            var response = await client.PostAsync("https://www.paytr.com/odeme/api/get-token", new FormUrlEncodedContent(postData));
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            _logger.LogInformation("PayTR Token Response for Order {OrderNumber}: {Response}", merchantOid, responseContent);
+
+            using var doc = JsonDocument.Parse(responseContent);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("status", out var statusProp) && statusProp.GetString() == "success")
+            {
+                var token = root.GetProperty("token").GetString();
+                return new PayTrTokenResultDto(
+                    Success: true,
+                    Token: token,
+                    IframeUrl: $"https://www.paytr.com/odeme/guvenli/{token}",
+                    ErrorMessage: null
+                );
+            }
+            else
+            {
+                var reason = root.TryGetProperty("reason", out var reasonProp)
+                    ? reasonProp.GetString()
+                    : "PayTR token üretilemedi.";
+
+                _logger.LogWarning("PayTR Token failed for Order {OrderNumber}: {Reason}", merchantOid, reason);
+
+                return new PayTrTokenResultDto(
+                    Success: false,
+                    Token: null,
+                    IframeUrl: null,
+                    ErrorMessage: reason
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PayTR CreatePayTrPaymentTokenAsync error for order {OrderNumber}", request.OrderNumber);
+            return new PayTrTokenResultDto(
+                Success: false,
+                Token: null,
+                IframeUrl: null,
+                ErrorMessage: $"PayTR bağlantı hatası: {ex.Message}"
+            );
+        }
+    }
+
+    public bool ValidatePayTrCallback(PayTrCallbackRequestDto callback)
+    {
+        try
+        {
+            var payTrSection = _configuration.GetSection("PayTR");
+            var merchantKey = payTrSection["MerchantKey"] ?? "";
+            var merchantSalt = payTrSection["MerchantSalt"] ?? "";
+
+            if (string.IsNullOrWhiteSpace(merchantKey) || string.IsNullOrWhiteSpace(merchantSalt))
+            {
+                _logger.LogError("PayTR MerchantKey or MerchantSalt is missing in configuration.");
+                return false;
+            }
+
+            // PayTR Callback Hash Formula: merchant_oid + merchant_salt + status + total_amount
+            var hashStr = $"{callback.MerchantOid}{merchantSalt}{callback.Status}{callback.TotalAmount}";
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(merchantKey));
+            var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(hashStr));
+            var expectedHash = Convert.ToBase64String(hashBytes);
+
+            var isValid = string.Equals(expectedHash, callback.Hash, StringComparison.Ordinal);
+            if (!isValid)
+            {
+                _logger.LogWarning("PayTR Callback hash verification failed for Order {OrderNumber}. Expected: {Expected}, Received: {Received}",
+                    callback.MerchantOid, expectedHash, callback.Hash);
+            }
+
+            return isValid;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating PayTR callback hash for order {OrderNumber}", callback.MerchantOid);
+            return false;
+        }
     }
 }

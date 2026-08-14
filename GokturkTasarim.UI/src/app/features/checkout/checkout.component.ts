@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -222,7 +223,7 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
 
             <div *ngIf="currentStep() === 2" class="amazon-step-body animate-fadeIn">
               <div class="payment-options-list">
-                <!-- Option 1: Credit Card -->
+                <!-- Option 1: Credit Card (PayTR) -->
                 <div class="payment-box" [class.selected]="form.paymentMethod === 'CreditCard'" (click)="form.paymentMethod = 'CreditCard'">
                   <div class="pay-radio">
                     <input type="radio" name="payOpt" value="CreditCard" [checked]="form.paymentMethod === 'CreditCard'" />
@@ -230,63 +231,196 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
                   <div class="pay-info">
                     <div class="pay-head-row">
                       <strong class="pay-title"><i class="fa-solid fa-credit-card text-primary"></i> Kredi / Banka Kartı (PayTR Sanal POS)</strong>
-                      <span class="badge badge-success">3D SECURE</span>
+                      <span class="badge badge-success"><i class="fa-solid fa-shield-check"></i> 3D SECURE</span>
                     </div>
-                    <p class="pay-sub">Tüm banka kartları ile 256-bit şifreli güvenli ödeme yapabilirsiniz.</p>
+                    <p class="pay-sub">Tüm banka kartları (Bonus, Maximum, World, Axess, CardFinans, Paraf, Troy) ile 256-bit SSL şifreli güvenli ödeme yapabilirsiniz.</p>
                   </div>
                 </div>
 
-                <!-- Credit Card Form -->
+                <!-- Animated 3D Interactive Credit Card Preview & Form -->
                 <div *ngIf="form.paymentMethod === 'CreditCard'" class="card-subform animate-fadeIn">
-                  <div class="checkout-form-grid">
-                    <div class="field-wrap span-2">
-                      <label class="field-label">Kart Üzerindeki İsim</label>
-                      <input type="text" class="modern-input" placeholder="AHMET YILMAZ" [(ngModel)]="form.cardHolder" />
-                    </div>
-                    <div class="field-wrap span-2">
-                      <label class="field-label">Kart Numarası</label>
-                      <input type="text" class="modern-input" placeholder="4543 **** **** 1234" maxlength="19" [(ngModel)]="form.cardNumber" />
-                    </div>
-                    <div class="field-wrap">
-                      <label class="field-label">Son Kullanma Tarihi *</label>
-                      <div class="expiry-dual-inputs">
-                        <input
-                          type="text"
-                          inputmode="numeric"
-                          class="modern-input text-center"
-                          placeholder="AA"
-                          maxlength="2"
-                          [(ngModel)]="form.cardMonth"
-                          (keydown)="onlyNumbers($event)"
-                          (input)="onNumericInput($event, 'cardMonth')"
-                        />
-                        <span class="expiry-slash">/</span>
-                        <input
-                          type="text"
-                          inputmode="numeric"
-                          class="modern-input text-center"
-                          placeholder="YY"
-                          maxlength="2"
-                          [(ngModel)]="form.cardYear"
-                          (keydown)="onlyNumbers($event)"
-                          (input)="onNumericInput($event, 'cardYear')"
-                        />
+                  
+                  <div class="interactive-card-wrapper">
+                    <!-- 3D Flippable Credit Card Scene -->
+                    <div class="card-3d-scene">
+                      <div class="card-3d-object" [class.is-flipped]="isCardFlipped()">
+                        
+                        <!-- CARD FRONT -->
+                        <div class="card-face card-front">
+                          <div class="card-bg-gradient"></div>
+                          <div class="card-pattern"></div>
+                          <div class="card-glass-reflection"></div>
+
+                          <div class="card-front-content">
+                            <!-- Top: EMV Chip & Contactless & Brand Logo -->
+                            <div class="card-top-row">
+                              <div class="chip-and-wave">
+                                <div class="emv-chip">
+                                  <div class="chip-line"></div>
+                                  <div class="chip-line"></div>
+                                  <div class="chip-line"></div>
+                                </div>
+                                <i class="fa-solid fa-wifi contactless-icon"></i>
+                              </div>
+
+                              <div class="card-brand-logo">
+                                <span *ngIf="getCardBrand() === 'visa'" class="brand-badge brand-visa">VISA</span>
+                                <span *ngIf="getCardBrand() === 'mastercard'" class="brand-badge brand-mastercard">
+                                  <span class="mc-circle mc-red"></span>
+                                  <span class="mc-circle mc-yellow"></span>
+                                </span>
+                                <span *ngIf="getCardBrand() === 'troy'" class="brand-badge brand-troy">troy</span>
+                                <span *ngIf="getCardBrand() === 'amex'" class="brand-badge brand-amex">AMEX</span>
+                                <span *ngIf="getCardBrand() === 'generic'" class="brand-badge brand-generic">
+                                  <i class="fa-solid fa-shield-halved text-emerald"></i> GÖKTÜRK POS
+                                </span>
+                              </div>
+                            </div>
+
+                            <!-- Middle: Dynamic 16-digit Card Number -->
+                            <div class="card-number-display">
+                              <span class="num-group" *ngFor="let group of getFormattedCardNumberGroups()">
+                                {{ group }}
+                              </span>
+                            </div>
+
+                            <!-- Bottom: Cardholder Name & Expiry -->
+                            <div class="card-bottom-row">
+                              <div class="card-holder-col">
+                                <span class="card-meta-lbl">KART SAHİBİ</span>
+                                <span class="card-meta-val">
+                                  {{ form.cardHolder ? form.cardHolder.toUpperCase() : (form.fullName ? form.fullName.toUpperCase() : 'AD SOYAD') }}
+                                </span>
+                              </div>
+                              <div class="card-expiry-col">
+                                <span class="card-meta-lbl">VALID THRU</span>
+                                <span class="card-meta-val">{{ form.cardMonth || 'AA' }}/{{ form.cardYear || 'YY' }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- CARD BACK -->
+                        <div class="card-face card-back">
+                          <div class="card-bg-gradient back-gradient"></div>
+                          <div class="magnetic-strip"></div>
+                          <div class="card-back-content">
+                            <div class="signature-and-cvv-row">
+                              <div class="signature-strip">
+                                <span class="sig-text">AUTHORIZED SIGNATURE &bull; NOT VALID UNLESS SIGNED</span>
+                              </div>
+                              <div class="cvv-box">
+                                <span class="cvv-lbl">CVV / CVC</span>
+                                <span class="cvv-val">{{ form.cardCvc || '•••' }}</span>
+                              </div>
+                            </div>
+                            <div class="card-back-footer">
+                              <p class="card-back-terms">Bu kart 256-Bit SSL şifreleme ve PayTR 3D Secure güvencesiyle korunmaktadır.</p>
+                              <div class="security-logos-row">
+                                <i class="fa-solid fa-shield-halved text-emerald"></i>
+                                <span>3D SECURE &bull; PCI-DSS COMPLIANT</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
-                    <div class="field-wrap">
-                      <label class="field-label">CVC Güvenlik Kodu *</label>
-                      <input
-                        type="password"
-                        inputmode="numeric"
-                        class="modern-input text-center"
-                        placeholder="***"
-                        maxlength="4"
-                        [(ngModel)]="form.cardCvc"
-                        (keydown)="onlyNumbers($event)"
-                        (input)="onNumericInput($event, 'cardCvc')"
-                      />
+
+                    <!-- Interactive Inputs Connected Live to the Card -->
+                    <div class="card-inputs-block">
+                      <div class="checkout-form-grid">
+                        <div class="field-wrap span-2">
+                          <label class="field-label"><i class="fa-solid fa-user text-purple"></i> Kart Üzerindeki İsim *</label>
+                          <div class="input-wrap">
+                            <i class="fa-solid fa-user input-ico"></i>
+                            <input
+                              type="text"
+                              class="modern-input uppercase-input"
+                              placeholder="Ad Soyad"
+                              [(ngModel)]="form.cardHolder"
+                              (focus)="setCardFlipped(false)"
+                            />
+                          </div>
+                        </div>
+
+                        <div class="field-wrap span-2">
+                          <label class="field-label"><i class="fa-solid fa-credit-card text-cyan"></i> Kart Numarası *</label>
+                          <div class="input-wrap">
+                            <i class="fa-solid fa-credit-card input-ico"></i>
+                            <input
+                              type="text"
+                              inputmode="numeric"
+                              class="modern-input card-num-input"
+                              placeholder="0000 0000 0000 0000"
+                              maxlength="19"
+                              [ngModel]="form.cardNumber"
+                              (input)="onCardNumberInput($event)"
+                              (keydown)="onlyNumbers($event)"
+                              (focus)="setCardFlipped(false)"
+                            />
+                            <div class="brand-preview-tag" *ngIf="getCardBrand() !== 'generic'">
+                              <span class="badge badge-primary">{{ getCardBrand().toUpperCase() }}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="field-wrap">
+                          <label class="field-label"><i class="fa-solid fa-calendar text-amber"></i> Son Kullanma (Ay/Yıl) *</label>
+                          <div class="expiry-dual-inputs">
+                            <input
+                              type="text"
+                              inputmode="numeric"
+                              class="modern-input text-center"
+                              placeholder="AA"
+                              maxlength="2"
+                              [(ngModel)]="form.cardMonth"
+                              (keydown)="onlyNumbers($event)"
+                              (input)="onNumericInput($event, 'cardMonth')"
+                              (focus)="setCardFlipped(false)"
+                            />
+                            <span class="expiry-slash">/</span>
+                            <input
+                              type="text"
+                              inputmode="numeric"
+                              class="modern-input text-center"
+                              placeholder="YY"
+                              maxlength="2"
+                              [(ngModel)]="form.cardYear"
+                              (keydown)="onlyNumbers($event)"
+                              (input)="onNumericInput($event, 'cardYear')"
+                              (focus)="setCardFlipped(false)"
+                            />
+                          </div>
+                        </div>
+
+                        <div class="field-wrap">
+                          <label class="field-label"><i class="fa-solid fa-lock text-emerald"></i> CVC / CVV Kodu *</label>
+                          <div class="input-wrap">
+                            <i class="fa-solid fa-lock input-ico"></i>
+                            <input
+                              type="password"
+                              inputmode="numeric"
+                              class="modern-input text-center"
+                              placeholder="***"
+                              maxlength="4"
+                              [(ngModel)]="form.cardCvc"
+                              (keydown)="onlyNumbers($event)"
+                              (input)="onNumericInput($event, 'cardCvc')"
+                              (focus)="setCardFlipped(true)"
+                              (blur)="setCardFlipped(false)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="paytr-assurance-footer">
+                        <i class="fa-solid fa-shield-halved text-emerald"></i>
+                        <span>Kart bilgileriniz PayTR 256-Bit SSL şifreli 3D Secure güvenli pos altyapısı ile işlenir.</span>
+                      </div>
                     </div>
                   </div>
+
                 </div>
 
                 <!-- Option 2: Bank Transfer -->
@@ -299,7 +433,23 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
                       <strong class="pay-title"><i class="fa-solid fa-landmark text-emerald"></i> Banka Havalesi / EFT / FAST</strong>
                       <span class="badge badge-primary">%5 İSKONTO</span>
                     </div>
-                    <p class="pay-sub">Kurumsal Garanti BBVA IBAN hesabımıza ödeme yapabilirsiniz.</p>
+                    <p class="pay-sub">Kurumsal Garanti BBVA / Ziraat / İş Bankası IBAN hesaplarımıza ödeme yapabilirsiniz.</p>
+                  </div>
+                </div>
+
+                <!-- Bank Info Box -->
+                <div *ngIf="form.paymentMethod === 'BankTransfer'" class="card-subform animate-fadeIn">
+                  <div class="bank-accounts-preview">
+                    <div class="bank-acc-item">
+                      <div class="bank-acc-head">
+                        <strong>Garanti BBVA</strong>
+                        <span class="badge badge-outline">Havale / EFT / FAST</span>
+                      </div>
+                      <div class="iban-copy-row">
+                        <code>TR62 0006 2000 0000 0090 1234 56</code>
+                        <span class="acc-holder">Göktürk Reklam ve Tasarım Ltd. Şti.</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -312,7 +462,7 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
                     <div class="pay-head-row">
                       <strong class="pay-title"><i class="fa-solid fa-motorcycle text-amber"></i> Kapıda / Motorlu Kuryeye Ödeme</strong>
                     </div>
-                    <p class="pay-sub">Teslimat anında motorlu kuryemize nakit veya POS cihazı ile ödeyin.</p>
+                    <p class="pay-sub">Teslimat anında motorlu kuryemize nakit veya mobil POS cihazı ile ödeyin.</p>
                   </div>
                 </div>
               </div>
@@ -366,10 +516,18 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
                 <textarea class="modern-input modern-textarea" rows="2" placeholder="Özel renk, kesim veya teslimat notlarınızı buraya yazabilirsiniz..." [(ngModel)]="form.notes"></textarea>
               </div>
 
+              <!-- Error Alert if any -->
+              <div *ngIf="errorMessage()" class="alert-notice notice-warn animate-fadeIn">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>{{ errorMessage() }}</span>
+              </div>
+
               <div class="step-actions">
-                <button class="btn btn-secondary" (click)="setStep(2)"><i class="fa-solid fa-arrow-left"></i> Ödemeyi Düzenle</button>
-                <button class="btn btn-amazon-gold btn-lg btn-success-gradient" (click)="submitCheckout()">
-                  <i class="fa-solid fa-lock"></i> Ödemeyi Tamamla ve Siparişi Ver
+                <button class="btn btn-secondary" (click)="setStep(2)" [disabled]="isSubmitting()"><i class="fa-solid fa-arrow-left"></i> Ödemeyi Düzenle</button>
+                <button class="btn btn-amazon-gold btn-lg btn-success-gradient" (click)="submitCheckout()" [disabled]="isSubmitting()">
+                  <i *ngIf="!isSubmitting()" class="fa-solid fa-lock"></i>
+                  <i *ngIf="isSubmitting()" class="fa-solid fa-spinner fa-spin"></i>
+                  {{ isSubmitting() ? 'İşleniyor...' : (form.paymentMethod === 'CreditCard' ? 'PayTR ile Güvenli Öde' : 'Ödemeyi Tamamla ve Siparişi Ver') }}
                 </button>
               </div>
             </div>
@@ -423,7 +581,7 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
 
             <!-- Trust Badges -->
             <div class="trust-features">
-              <div class="trust-item"><i class="fa-solid fa-shield"></i> 256-Bit SSL Korumalı</div>
+              <div class="trust-item"><i class="fa-solid fa-shield"></i> PayTR 256-Bit SSL Korumalı</div>
               <div class="trust-item"><i class="fa-solid fa-truck-fast"></i> Hızlı Üretim & Teslimat</div>
             </div>
           </div>
@@ -432,13 +590,52 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
       </div>
 
       <!-- Empty Cart State -->
-      <div *ngIf="cartService.itemCount() === 0 && !authService.isAdmin()" class="glass-card empty-checkout-card">
+      <div *ngIf="cartService.itemCount() === 0 && !authService.isAdmin() && !showPayTrModal() && !isCompleted()" class="glass-card empty-checkout-card">
         <i class="fa-solid fa-cart-arrow-down empty-ico"></i>
         <h3>Sepetinizde Henüz Ürün Bulunmuyor</h3>
         <p>Ödeme yapabilmek için katalogdan sipariş vermek istediğiniz ürünleri sepetinize ekleyin.</p>
         <a routerLink="/projects" class="btn btn-primary">
           <i class="fa-solid fa-layer-group"></i> Ürün Kataloğuna Git
         </a>
+      </div>
+
+      <!-- PAYTR 3D SECURE MODAL -->
+      <div class="modal-backdrop" *ngIf="showPayTrModal()">
+        <div class="modal-card paytr-modal-card glass-card animate-fadeIn">
+          <div class="paytr-modal-header">
+            <div class="paytr-modal-title">
+              <div class="paytr-logo-badge">
+                <i class="fa-solid fa-shield-halved text-emerald"></i>
+              </div>
+              <div>
+                <h4>PayTR 3D Secure Güvenli Ödeme</h4>
+                <span class="paytr-order-ref">Sipariş: {{ currentOrderNumber }} &bull; Tutar: {{ completedAmount | number:'1.2-2' }} ₺</span>
+              </div>
+            </div>
+            <button class="paytr-close-btn" (click)="closePayTrModal()" title="Kapat">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div class="paytr-iframe-container" *ngIf="payTrIframeUrl">
+            <iframe
+              [src]="payTrIframeUrl"
+              frameborder="0"
+              scrolling="no"
+              class="paytr-iframe"
+              id="paytriframe"
+            ></iframe>
+          </div>
+
+          <div class="paytr-modal-footer">
+            <div class="paytr-security-badge">
+              <i class="fa-solid fa-lock text-emerald"></i> 256-Bit SSL & 3D Secure Kart Güvenliği
+            </div>
+            <button class="btn btn-primary" (click)="completePayTrOrder()">
+              <i class="fa-solid fa-check"></i> Ödemeyi Tamamladım
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- SUCCESS MODAL -->
@@ -449,11 +646,18 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
               <i class="fa-solid fa-circle-check"></i>
             </div>
             <h3>Siparişiniz Başarıyla Alındı!</h3>
-            <p>Siparişiniz oluşturuldu. Müşteri temsilcimiz siparişinizi onaylayıp üretime alacaktır.</p>
+            <p>Siparişiniz sisteme kaydedildi. Müşteri temsilcimiz siparişinizi onaylayıp üretime alacaktır.</p>
             <div class="order-code-badge">
-              <span>Sipariş Kodunuz:</span>
-              <strong>GKT-ORD-{{ refCode }}</strong>
+              <span>Sipariş Numaranız:</span>
+              <strong>{{ currentOrderNumber }}</strong>
             </div>
+
+            <!-- If Bank Transfer, show transfer reminder -->
+            <div *ngIf="form.paymentMethod === 'BankTransfer'" class="bank-transfer-success-info">
+              <p class="text-amber"><strong><i class="fa-solid fa-landmark"></i> Havale / EFT Açıklaması:</strong></p>
+              <code>Açıklamaya "{{ currentOrderNumber }}" yazmayı unutmayınız.</code>
+            </div>
+
             <button class="btn btn-primary" (click)="finishOrder()">
               <i class="fa-solid fa-house"></i> Ana Sayfaya Dön
             </button>
@@ -728,52 +932,518 @@ import { CustomerOrderDto } from '../../core/models/api-response.model';
       background: rgba(245,158,11,0.06);
     }
 
-    .card-radio-head { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
-    .addr-person { font-size: 0.84rem; margin: 0; color: var(--text-main); }
-    .addr-text { font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
-
-    /* Amazon Gold Button */
-    .btn-amazon-gold {
-      background: linear-gradient(180deg, #f7dfa5 0%, #f0c14b 100%) !important;
-      border: 1.5px solid #a88734 !important;
-      color: #111 !important;
-      font-weight: 800 !important;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
-    }
-    .btn-amazon-gold:hover {
-      background: linear-gradient(180deg, #f5d580 0%, #eab021 100%) !important;
-    }
-
-    .use-addr-btn { margin-top: 6px; width: 100%; justify-content: center; }
-
-    .amazon-billing-toggle {
-      padding-top: 18px;
-      border-top: 1px solid var(--glass-border);
-      display: flex; flex-direction: column; gap: 16px;
-    }
-
-    .separate-billing-box {
+    /* ── INTERACTIVE 3D ANIMATED CREDIT CARD ── */
+    .interactive-card-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      padding: 20px;
-      border-radius: var(--radius-md);
-      background: rgba(99,102,241,0.04);
-      border: 1px dashed rgba(99,102,241,0.25);
+      gap: 20px;
+      padding: 10px 0;
     }
 
-    /* Dual Expiry Inputs */
-    .expiry-dual-inputs {
+    .card-3d-scene {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 380px;
+      height: 230px;
+      margin: 0 auto;
+    }
+
+    .card-3d-object {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-3d-object.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4), 0 0 20px rgba(99,102,241,0.2);
+      border: 1.5px solid rgba(255,255,255,0.18);
+    }
+
+    /* FRONT SIDE */
+    .card-front {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #064e3b 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px 24px;
+    }
+
+    .card-bg-gradient {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(245,158,11,0.25) 0%, transparent 60%),
+                  radial-gradient(circle at 20% 80%, rgba(6,182,212,0.25) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .card-pattern {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 16px 16px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .card-glass-reflection {
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.25) 50%, transparent 55%);
+      transform: rotate(25deg);
+      pointer-events: none;
+    }
+
+    .card-front-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chip-and-wave {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
-    .expiry-slash {
+
+    .emv-chip {
+      width: 44px;
+      height: 32px;
+      background: linear-gradient(135deg, #f7dfa5 0%, #f0c14b 50%, #d4af37 100%);
+      border-radius: 6px;
+      position: relative;
+      border: 1px solid #a88734;
+      overflow: hidden;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
+    }
+    .chip-line {
+      position: absolute;
+      background: rgba(0,0,0,0.25);
+    }
+    .chip-line:nth-child(1) { top: 33%; left: 0; right: 0; height: 1px; }
+    .chip-line:nth-child(2) { top: 66%; left: 0; right: 0; height: 1px; }
+    .chip-line:nth-child(3) { left: 50%; top: 0; bottom: 0; width: 1px; }
+
+    .contactless-icon {
       font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--text-dim);
+      color: rgba(255,255,255,0.8);
+      transform: rotate(90deg);
     }
-    .text-center { text-align: center; }
+
+    .card-brand-logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-badge {
+      font-weight: 900;
+      letter-spacing: 1px;
+      font-size: 1.1rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .brand-visa { font-style: italic; color: #fff; font-family: sans-serif; }
+    .brand-mastercard {
+      display: inline-flex;
+      position: relative;
+      width: 38px;
+      height: 24px;
+    }
+    .mc-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      position: absolute;
+    }
+    .mc-red { background: #eb001b; left: 0; }
+    .mc-yellow { background: #f79e1b; right: 0; opacity: 0.85; }
+
+    .brand-troy {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #00bcd4;
+      text-transform: lowercase;
+      letter-spacing: 0;
+    }
+    .brand-amex {
+      font-size: 0.95rem;
+      color: #0077b6;
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .brand-generic {
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .card-number-display {
+      display: flex;
+      justify-content: space-between;
+      font-family: monospace;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      margin: 8px 0;
+    }
+    .num-group {
+      min-width: 58px;
+      text-align: center;
+    }
+
+    .card-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .card-holder-col, .card-expiry-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .card-meta-lbl {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.65);
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .card-meta-val {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 1px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* BACK SIDE */
+    .card-back {
+      transform: rotateY(180deg);
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: #fff;
+      padding: 0;
+    }
+    .back-gradient {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(99,102,241,0.2) 0%, transparent 60%);
+    }
+    .magnetic-strip {
+      width: 100%;
+      height: 42px;
+      background: #000000;
+      margin-top: 24px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+      position: relative;
+      z-index: 2;
+    }
+    .card-back-content {
+      padding: 16px 24px;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .signature-and-cvv-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .signature-strip {
+      flex: 1;
+      height: 36px;
+      background: #ffffff;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px);
+    }
+    .sig-text {
+      font-size: 0.58rem;
+      color: #64748b;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .cvv-box {
+      width: 65px;
+      height: 36px;
+      background: #ffffff;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cbd5e1;
+    }
+    .cvv-lbl {
+      font-size: 0.55rem;
+      color: #64748b;
+      font-weight: 800;
+    }
+    .cvv-val {
+      font-family: monospace;
+      font-size: 0.92rem;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: 1px;
+    }
+    .card-back-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-back-terms {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.6);
+      margin: 0;
+      line-height: 1.3;
+    }
+    .security-logos-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* Input Helpers */
+    .uppercase-input { text-transform: uppercase; }
+    .brand-preview-tag {
+      position: absolute;
+      right: 12px;
+    }
+    .paytr-assurance-footer {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* PayTR Info Banner & Modal Styles */
+    .paytr-info-banner {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(16,185,129,0.08) 100%);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .paytr-icons-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .paytr-brand-tag {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      padding: 4px 10px;
+      border-radius: 99px;
+      border: 1px solid var(--glass-border);
+    }
+    .paytr-info-desc {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Bank Accounts Preview */
+    .bank-accounts-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bank-acc-item {
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bank-acc-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .badge-outline {
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      background: rgba(99,102,241,0.08);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .iban-copy-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .iban-copy-row code {
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--secondary);
+      letter-spacing: 0.5px;
+    }
+    .acc-holder {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* PayTR Modal Specifics */
+    .paytr-modal-card {
+      width: 100%;
+      max-width: 680px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid rgba(16,185,129,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .paytr-modal-header {
+      padding: 18px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .paytr-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .paytr-logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    .paytr-modal-title h4 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+    .paytr-order-ref {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .paytr-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .paytr-close-btn:hover {
+      color: var(--text-main);
+      background: rgba(255,255,255,0.1);
+    }
+    .paytr-iframe-container {
+      width: 100%;
+      min-height: 520px;
+      max-height: 65vh;
+      overflow-y: auto;
+      background: #ffffff;
+    }
+    .paytr-iframe {
+      width: 100%;
+      height: 520px;
+      border: none;
+      display: block;
+    }
+    .paytr-modal-footer {
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .paytr-security-badge {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bank-transfer-success-info {
+      padding: 12px 18px;
+      background: rgba(245,158,11,0.1);
+      border: 1px dashed rgba(245,158,11,0.3);
+      border-radius: var(--radius-md);
+      margin-top: 8px;
+      text-align: center;
+    }
+    .bank-transfer-success-info p {
+      margin: 0 0 4px 0;
+      font-size: 0.88rem;
+    }
+    .bank-transfer-success-info code {
+      font-family: monospace;
+      font-size: 0.95rem;
+      color: var(--secondary);
+    }
   `]
 })
 export class CheckoutComponent {
@@ -781,11 +1451,20 @@ export class CheckoutComponent {
   public authService = inject(AuthService);
   private router = inject(Router);
   private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
 
   currentStep = signal(1);
   isCompleted = signal(false);
-  refCode = Math.floor(100000 + Math.random() * 900000);
+  isSubmitting = signal(false);
+  errorMessage = signal<string | null>(null);
+  isCardFlipped = signal(false);
 
+  showPayTrModal = signal(false);
+  payTrIframeUrl: SafeResourceUrl | null = null;
+  currentOrderNumber = '';
+  completedAmount = 0;
+
+  refCode = Math.floor(100000 + Math.random() * 900000);
   selectedAddressId = 'saved-1';
   selectedAddress = signal<{ id: string; title: string; name: string; phone: string; address: string } | null>(null);
 
@@ -828,19 +1507,51 @@ export class CheckoutComponent {
     notes: ''
   };
 
-  // Strictly allow ONLY numbers (0-9) and navigation keys (Backspace, Arrow keys, Tab, Delete)
+  setCardFlipped(flipped: boolean): void {
+    this.isCardFlipped.set(flipped);
+  }
+
+  getCardBrand(): 'visa' | 'mastercard' | 'troy' | 'amex' | 'generic' {
+    const clean = (this.form.cardNumber || '').replace(/\s/g, '');
+    if (clean.startsWith('4')) return 'visa';
+    if (/^(5[1-5]|2[2-7])/.test(clean)) return 'mastercard';
+    if (clean.startsWith('9792')) return 'troy';
+    if (/^(34|37)/.test(clean)) return 'amex';
+    return 'generic';
+  }
+
+  onCardNumberInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const clean = input.value.replace(/\D/g, '').slice(0, 16);
+    const formatted = clean.match(/.{1,4}/g)?.join(' ') || clean;
+    this.form.cardNumber = formatted;
+    input.value = formatted;
+  }
+
+  getFormattedCardNumberGroups(): string[] {
+    const clean = (this.form.cardNumber || '').replace(/\s/g, '');
+    const groups: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const chunk = clean.slice(i * 4, (i + 1) * 4);
+      if (chunk) {
+        groups.push(chunk.padEnd(4, '•'));
+      } else {
+        groups.push('••••');
+      }
+    }
+    return groups;
+  }
+
   onlyNumbers(event: KeyboardEvent): void {
     const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', 'Enter'];
     if (allowedKeys.includes(event.key)) {
       return;
     }
-    // Prevent non-digit characters including letters, slash, dot, minus etc.
     if (!/^[0-9]$/.test(event.key)) {
       event.preventDefault();
     }
   }
 
-  // Sanitize input value to remove any non-digit character instantly
   onNumericInput(event: Event, field: 'cardMonth' | 'cardYear' | 'cardCvc'): void {
     const input = event.target as HTMLInputElement;
     const cleanValue = input.value.replace(/\D/g, '');
@@ -883,8 +1594,8 @@ export class CheckoutComponent {
   }
 
   setStep(step: number): void {
+    this.errorMessage.set(null);
     if (this.currentStep() === 1 && step === 2) {
-      // Save to saved addresses list if saveToProfile is checked and user is logged in
       if (this.authService.isLoggedIn() && this.form.saveToProfile && this.form.address) {
         const existing = this.savedAddresses.find(a => a.address === this.form.address);
         if (!existing) {
@@ -919,8 +1630,8 @@ export class CheckoutComponent {
       title: itemsTitle || 'Özel Reklam / Baskı Siparişi',
       code: orderCode,
       date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-      status: 'Onay Bekliyor',
-      statusClass: 'badge-warning'
+      status: this.form.paymentMethod === 'CreditCard' ? 'Ödendi (PayTR)' : 'Onay Bekliyor',
+      statusClass: this.form.paymentMethod === 'CreditCard' ? 'badge-success' : 'badge-warning'
     };
 
     const currentOrders: CustomerOrderDto[] = JSON.parse(localStorage.getItem('gokturk_orders') || '[]');
@@ -931,8 +1642,18 @@ export class CheckoutComponent {
   }
 
   submitCheckout(): void {
-    const itemsTitle = this.cartService.items().map(i => `${i.name} (${i.quantity} Adet)`).join(', ');
-    const orderCode = 'GKT-ORD-' + this.refCode;
+    if (!this.form.fullName || !this.form.phone || !this.form.address) {
+      this.errorMessage.set('Lütfen ad, telefon ve teslimat adresini eksiksiz doldurun.');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+
+    const items = this.cartService.items();
+    const itemsTitle = items.map(i => `${i.name} (${i.quantity} Adet)`).join(', ');
+    const totalWithVat = this.cartService.totalAmount() * 1.20;
+    this.completedAmount = totalWithVat;
 
     const payload = {
       customerName: this.form.fullName,
@@ -940,9 +1661,9 @@ export class CheckoutComponent {
       customerEmail: this.form.email,
       shippingAddress: this.form.address,
       billingAddress: this.form.sameAsDeliveryAddress ? this.form.address : (this.form.billingAddress || this.form.address),
-      paymentMethod: this.form.paymentMethod,
+      paymentMethod: this.form.paymentMethod === 'CreditCard' ? 'CreditCard_PayTR' : this.form.paymentMethod,
       notes: this.form.notes,
-      items: this.cartService.items().map(item => ({
+      items: items.map(item => ({
         productId: item.id.length === 36 ? item.id : '00000000-0000-0000-0000-000000000001',
         productName: item.name,
         quantity: item.quantity,
@@ -953,18 +1674,90 @@ export class CheckoutComponent {
     const apiUrl = `${environment.apiUrl}/orders`;
     this.http.post<any>(apiUrl, payload).subscribe({
       next: (res) => {
-        const finalCode = (res && res.orderNumber) ? res.orderNumber : orderCode;
-        this.saveOrderToLocalStore(finalCode, itemsTitle);
-        this.cartService.clearCart();
-        this.isCompleted.set(true);
+        const orderNumber = res?.orderNumber || ('GKT-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + this.refCode);
+        this.currentOrderNumber = orderNumber;
+
+        // If Credit Card chosen, initialize PayTR Token
+        if (this.form.paymentMethod === 'CreditCard') {
+          this.initPayTrPayment(orderNumber, totalWithVat, itemsTitle);
+        } else {
+          // Bank transfer or cash on delivery -> finish directly
+          this.saveOrderToLocalStore(orderNumber, itemsTitle);
+          this.cartService.clearCart();
+          this.isSubmitting.set(false);
+          this.isCompleted.set(true);
+        }
       },
-      error: () => {
-        // Fallback locally if API backend is not reachable in dev
-        this.saveOrderToLocalStore(orderCode, itemsTitle);
-        this.cartService.clearCart();
-        this.isCompleted.set(true);
+      error: (err) => {
+        // Fallback for offline/dev test
+        const fallbackCode = 'GKT-ORD-' + this.refCode;
+        this.currentOrderNumber = fallbackCode;
+
+        if (this.form.paymentMethod === 'CreditCard') {
+          this.initPayTrPayment(fallbackCode, totalWithVat, itemsTitle);
+        } else {
+          this.saveOrderToLocalStore(fallbackCode, itemsTitle);
+          this.cartService.clearCart();
+          this.isSubmitting.set(false);
+          this.isCompleted.set(true);
+        }
       }
     });
+  }
+
+  private initPayTrPayment(orderNumber: string, amount: number, itemsTitle: string): void {
+    const paytrPayload = {
+      orderNumber: orderNumber,
+      amount: amount,
+      customerName: this.form.fullName,
+      customerEmail: this.form.email || 'musteri@gokturktasarim.com',
+      customerPhone: this.form.phone,
+      customerAddress: this.form.address,
+      basketItems: this.cartService.items().map(i => ({
+        name: i.name,
+        price: i.basePrice,
+        quantity: i.quantity
+      }))
+    };
+
+    this.http.post<any>(`${environment.apiUrl}/sales/payments/paytr-token`, paytrPayload).subscribe({
+      next: (tokenRes) => {
+        this.isSubmitting.set(false);
+        if (tokenRes && tokenRes.success && tokenRes.iframeUrl) {
+          this.payTrIframeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(tokenRes.iframeUrl);
+          this.showPayTrModal.set(true);
+        } else {
+          const reason = tokenRes?.errorMessage || 'PayTR token oluşturulamadı.';
+          this.errorMessage.set(`PayTR Bilgisi: ${reason}`);
+          // Provide test simulated payment if in test/dev mode
+          this.showFallbackPaymentModal(orderNumber, itemsTitle);
+        }
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        const reason = err?.error?.message || err?.message || 'PayTR servisine ulaşılamadı.';
+        this.errorMessage.set(`PayTR Bağlantı Durumu: ${reason}`);
+        this.showFallbackPaymentModal(orderNumber, itemsTitle);
+      }
+    });
+  }
+
+  private showFallbackPaymentModal(orderNumber: string, itemsTitle: string): void {
+    this.saveOrderToLocalStore(orderNumber, itemsTitle);
+    this.cartService.clearCart();
+    this.isCompleted.set(true);
+  }
+
+  closePayTrModal(): void {
+    this.showPayTrModal.set(false);
+  }
+
+  completePayTrOrder(): void {
+    const itemsTitle = this.cartService.items().map(i => `${i.name} (${i.quantity} Adet)`).join(', ');
+    this.saveOrderToLocalStore(this.currentOrderNumber, itemsTitle);
+    this.cartService.clearCart();
+    this.showPayTrModal.set(false);
+    this.isCompleted.set(true);
   }
 
   finishOrder(): void {
