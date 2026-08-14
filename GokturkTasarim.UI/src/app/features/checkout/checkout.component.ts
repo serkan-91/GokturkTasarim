@@ -1812,15 +1812,12 @@ export class CheckoutComponent {
         } else {
           const reason = tokenRes?.errorMessage || 'PayTR token oluşturulamadı.';
           this.errorMessage.set(`PayTR Bilgisi: ${reason}`);
-          // Provide test simulated payment if in test/dev mode
-          this.showFallbackPaymentModal(orderNumber, itemsTitle);
         }
       },
       error: (err) => {
         this.isSubmitting.set(false);
         const reason = err?.error?.message || err?.message || 'PayTR servisine ulaşılamadı.';
-        this.errorMessage.set(`PayTR Bağlantı Durumu: ${reason}`);
-        this.showFallbackPaymentModal(orderNumber, itemsTitle);
+        this.errorMessage.set(`PayTR Bağlantı Hatası: ${reason}`);
       }
     });
   }
