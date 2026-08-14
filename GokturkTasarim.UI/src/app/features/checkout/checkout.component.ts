@@ -610,9 +610,9 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
         </a>
       </div>
 
-      <!-- PAYTR 3D SECURE MODAL -->
-      <div class="modal-backdrop" *ngIf="showPayTrModal()">
-        <div class="modal-card paytr-modal-card glass-card animate-fadeIn">
+      <!-- PAYTR 3D SECURE MODAL (KORUMALI & KAPANAMAZ GÜVENLİ ÖDEME PENCERESİ) -->
+      <div class="modal-backdrop paytr-backdrop" *ngIf="showPayTrModal()">
+        <div class="modal-card paytr-modal-card animate-fadeIn">
           <div class="paytr-modal-header">
             <div class="paytr-modal-title">
               <div class="paytr-logo-badge">
@@ -620,31 +620,22 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
               </div>
               <div>
                 <h4>PayTR 3D Secure Güvenli Ödeme</h4>
-                <span class="paytr-order-ref">Sipariş: {{ currentOrderNumber }} &bull; Tutar: {{ completedAmount | number:'1.2-2' }} ₺</span>
+                <span class="paytr-order-ref">Sipariş No: {{ currentOrderNumber }} &bull; Tutar: {{ completedAmount | number:'1.2-2' }} ₺</span>
               </div>
             </div>
-            <button class="paytr-close-btn" (click)="closePayTrModal()" title="Kapat">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
+            <div class="paytr-security-badge-top">
+              <i class="fa-solid fa-lock text-emerald"></i> <span>256-Bit SSL Korumalı</span>
+            </div>
           </div>
 
           <div class="paytr-iframe-container" *ngIf="payTrIframeUrl">
             <iframe
               [src]="payTrIframeUrl"
               frameborder="0"
-              scrolling="no"
+              scrolling="auto"
               class="paytr-iframe"
               id="paytriframe"
             ></iframe>
-          </div>
-
-          <div class="paytr-modal-footer">
-            <div class="paytr-security-badge">
-              <i class="fa-solid fa-lock text-emerald"></i> 256-Bit SSL & 3D Secure Kart Güvenliği
-            </div>
-            <button class="btn btn-primary" (click)="completePayTrOrder()">
-              <i class="fa-solid fa-check"></i> Ödemeyi Tamamladım
-            </button>
           </div>
         </div>
       </div>
@@ -1356,18 +1347,40 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
       display: flex;
       flex-direction: column;
       padding: 0;
+    /* PayTR Modal Specifics */
+    .paytr-backdrop {
+      background: rgba(5, 10, 25, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .paytr-modal-card {
+      width: 100%;
+      max-width: 720px;
+      height: 94vh;
+      max-height: 820px;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
       overflow: hidden;
-      border-radius: var(--radius-lg);
-      border: 1.5px solid rgba(16,185,129,0.3);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      border-radius: 20px;
+      background: #ffffff;
+      border: 2px solid rgba(16,185,129,0.5);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(16,185,129,0.2);
     }
     .paytr-modal-header {
-      padding: 18px 24px;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--glass-border);
+      padding: 14px 22px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      color: #fff;
+      flex-shrink: 0;
     }
     .paytr-modal-title {
       display: flex;
@@ -1375,58 +1388,52 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
       gap: 12px;
     }
     .paytr-logo-badge {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
-      background: rgba(16,185,129,0.15);
+      background: rgba(16,185,129,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
     .paytr-modal-title h4 {
       margin: 0;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 800;
+      color: #fff;
     }
     .paytr-order-ref {
-      font-size: 0.8rem;
-      color: var(--text-muted);
+      font-size: 0.78rem;
+      color: #94a3b8;
     }
-    .paytr-close-btn {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .paytr-close-btn:hover {
-      color: var(--text-main);
-      background: rgba(255,255,255,0.1);
+    .paytr-security-badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #10b981;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3);
+      padding: 4px 10px;
+      border-radius: 99px;
     }
     .paytr-iframe-container {
       width: 100%;
-      min-height: 520px;
-      max-height: 65vh;
+      flex: 1;
+      height: 100%;
+      min-height: 660px;
       overflow-y: auto;
       background: #ffffff;
     }
     .paytr-iframe {
       width: 100%;
-      height: 520px;
+      height: 100%;
+      min-height: 660px;
       border: none;
       display: block;
     }
-    .paytr-modal-footer {
-      padding: 16px 24px;
-      background: var(--bg-card);
-      border-top: 1px solid var(--glass-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
     }
