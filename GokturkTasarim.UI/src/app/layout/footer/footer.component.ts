@@ -147,9 +147,15 @@ import { RouterLink } from '@angular/router';
           <div class="footer-bottom-links">
             <a routerLink="/legal" [queryParams]="{tab: 'mss'}" class="bottom-link">Mesafeli Satış Sözleşmesi</a>
             <span class="divider">·</span>
-            <a routerLink="/legal" [queryParams]="{tab: 'kvkk'}" class="bottom-link">KVKK Aydınlatma Metni</a>
+            <a routerLink="/legal" [queryParams]="{tab: 'delivery'}" class="bottom-link">Teslimat &amp; Kargo Koşulları</a>
             <span class="divider">·</span>
-            <a routerLink="/legal" [queryParams]="{tab: 'terms'}" class="bottom-link">Gizlilik &amp; Çerez Politikası</a>
+            <a routerLink="/legal" [queryParams]="{tab: 'cancellation'}" class="bottom-link">İptal &amp; İade Koşulları</a>
+            <span class="divider">·</span>
+            <a routerLink="/legal" [queryParams]="{tab: 'obf'}" class="bottom-link">Ön Bilgilendirme</a>
+            <span class="divider">·</span>
+            <a routerLink="/legal" [queryParams]="{tab: 'terms'}" class="bottom-link">Gizlilik &amp; Güvenlik Politikası</a>
+            <span class="divider">·</span>
+            <a routerLink="/legal" [queryParams]="{tab: 'kvkk'}" class="bottom-link">KVKK</a>
           </div>
           <div class="footer-cert">
             <span class="cert-badge">

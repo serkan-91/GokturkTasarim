@@ -2,7 +2,7 @@ import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
-type LegalTab = 'mss' | 'obf' | 'kvkk' | 'terms';
+type LegalTab = 'mss' | 'obf' | 'delivery' | 'cancellation' | 'kvkk' | 'terms';
 
 @Component({
   selector: 'app-legal',
@@ -33,6 +33,20 @@ type LegalTab = 'mss' | 'obf' | 'kvkk' | 'terms';
         </button>
         <button
           class="legal-tab-btn"
+          [class.active]="activeTab() === 'delivery'"
+          (click)="activeTab.set('delivery')"
+        >
+          <i class="fa-solid fa-truck-fast"></i> Teslimat ve Kargo Koşulları
+        </button>
+        <button
+          class="legal-tab-btn"
+          [class.active]="activeTab() === 'cancellation'"
+          (click)="activeTab.set('cancellation')"
+        >
+          <i class="fa-solid fa-arrow-rotate-left"></i> İptal ve İade Koşulları
+        </button>
+        <button
+          class="legal-tab-btn"
           [class.active]="activeTab() === 'obf'"
           (click)="activeTab.set('obf')"
         >
@@ -45,7 +59,6 @@ type LegalTab = 'mss' | 'obf' | 'kvkk' | 'terms';
         >
           <i class="fa-solid fa-user-shield"></i> KVKK Aydınlatma Metni
         </button>
-
         <button
           class="legal-tab-btn"
           [class.active]="activeTab() === 'terms'"
@@ -96,7 +109,55 @@ type LegalTab = 'mss' | 'obf' | 'kvkk' | 'terms';
           <p>İşbu Sözleşme'nin uygulanmasında, Ticaret Bakanlığı'nca ilan edilen değere kadar Tüketici Hakem Heyetleri ile SATICI'nın yerleşim yerindeki (İstanbul) Tüketici Mahkemeleri yetkilidir.</p>
         </div>
 
-        <!-- 2. ÖN BİLGİLENDİRME FORMU -->
+        <!-- 2. TESLİMAT VE KARGO KOŞULLARI -->
+        <div *ngIf="activeTab() === 'delivery'" class="doc-body animate-fadeIn">
+          <h2>TESLİMAT VE KARGO KOŞULLARI</h2>
+          <span class="doc-meta">Sipariş Hazırlık, Üretim Süreleri ve Güvenli Teslimat Standartları</span>
+
+          <hr class="doc-hr" />
+
+          <h3>1. TESLİMAT SÜRESİ VE ÜRETİM AŞAMASI</h3>
+          <p>Siparişleriniz onaylandıktan ve ödeme işlemi tamamlandıktan sonra tasarım kontrolü yapılarak üretime alınır:</p>
+          <ul class="legal-list">
+            <li><strong>Standart & VIP Kartvizitler:</strong> 1 - 3 İş Günü içerisinde basılarak kargoya verilir.</li>
+            <li><strong>Broşür, Katalog & Matbaa:</strong> 2 - 4 İş Günü içerisinde hazırlanır.</li>
+            <li><strong>Promosyon & Baskılı Ürünler:</strong> Adet ve baskı tekniğine göre 2 - 5 İş Günü içinde kargolanır.</li>
+            <li><strong>İstanbul İçi VIP Motorlu Kurye:</strong> Üretimi tamamlanan acil siparişler aynı gün 2-4 saat içinde adrese elden teslim edilir.</li>
+          </ul>
+
+          <h3>2. KARGO FİRMALARI VE TAKİP</h3>
+          <p>Tüm Türkiye geneline gönderilerimiz anlaşmalı ulusal kargo firmaları (Yurtiçi Kargo, Aras Kargo, MNG Kargo, Sürat Kargo vb.) aracılığıyla sigortalı olarak yapılmaktadır. Siparişiniz kargoya verildiğinde SMS ve E-Posta ile <strong>Kargo Takip Numarası</strong> tarafınıza iletilir; ayrıca Müşteri Portalımız üzerinden canlı olarak takip edebilirsiniz.</p>
+
+          <h3>3. HASARLI VE EKSİK PAKET TESLİMATI</h3>
+          <p>Kargo teslimatı sırasında paketin dış yüzeyinde ezilme, yırtılma veya ıslanma gibi hasar tespit edilirse, paketi teslim almadan kargo görevlisine <strong>"Hasar Tespit Tutanağı"</strong> tutturulmalı ve derhal tarafımıza bilgi verilmelidir.</p>
+        </div>
+
+        <!-- 3. İPTAL VE İADE KOŞULLARI -->
+        <div *ngIf="activeTab() === 'cancellation'" class="doc-body animate-fadeIn">
+          <h2>İPTAL VE İADE KOŞULLARI</h2>
+          <span class="doc-meta">Tüketici Hakları, Sipariş İptali ve İade Süreçleri Bilgilendirmesi</span>
+
+          <hr class="doc-hr" />
+
+          <h3>1. SİPARİŞ İPTAL TALEBİ</h3>
+          <p>Verdiğiniz siparişi henüz <strong>üretim/baskı aşamasına geçmeden önce</strong> Müşteri Paneli üzerinden veya destek hattımızla iletişime geçerek iptal edebilirsiniz. İptal talebiniz onaylandığında ödemeniz kullandığınız ödeme yöntemine göre (Kredi Kartı veya Banka Hesabı) 1-3 iş günü içinde kesintisiz olarak iade edilir.</p>
+
+          <div class="legal-alert-box warning-box">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>
+              <strong>KİŞİYE ÖZEL ÜRETİLEN ÜRÜNLERDE İADE İSTİSNASI</strong>
+              <p>6502 sayılı Kanun ve Mesafeli Sözleşmeler Yönetmeliği Madde 15/b uyarınca: <em>"Müşterinin özel istekleri, kurumsal logosu, isim veya özel ölçüleri doğrultusunda basılan ve kişiselleştirilen ürünlerde"</em> baskı işlemi başladıktan sonra cayma ve keyfi iade hakkı bulunmamaktadır.</p>
+            </div>
+          </div>
+
+          <h3>2. AYIPLI / HATALI BASKI DURUMUNDA YENİDEN BASKI VE İADE</h3>
+          <p>Firmamızdan kaynaklanan baskı kayması, hatalı renk, eksik adet veya üretim kusuru tespit edilmesi durumunda, hatalı ürünler bedelsiz olarak <strong>derhal yeniden basılarak</strong> ekspres kargo ile adresinize gönderilir veya talep halinde tutarın tamamı iade edilir.</p>
+
+          <h3>3. İADE ÖDEMELERİ</h3>
+          <p>İadesi onaylanan siparişlerin bedeli, ödeme PayTR Sanal POS üzerinden kredi kartıyla yapılmışsa doğrudan karta iade edilir. Havale/EFT ile yapılan ödemeler bildirilen IBAN numarasına gönderilir.</p>
+        </div>
+
+        <!-- 4. ÖN BİLGİLENDİRME FORMU -->
         <div *ngIf="activeTab() === 'obf'" class="doc-body animate-fadeIn">
           <h2>ÖN BİLGİLENDİRME FORMU</h2>
           <span class="doc-meta">6502 Sayılı Tüketicinin Korunması Hakkında Kanun Madde 48 Uyarınca Hazırlanmıştır</span>
@@ -208,7 +269,7 @@ export class LegalComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      if (params['tab'] && ['mss', 'obf', 'kvkk', 'terms'].includes(params['tab'])) {
+      if (params['tab'] && ['mss', 'delivery', 'cancellation', 'obf', 'kvkk', 'terms'].includes(params['tab'])) {
         this.activeTab.set(params['tab'] as LegalTab);
       }
     });
