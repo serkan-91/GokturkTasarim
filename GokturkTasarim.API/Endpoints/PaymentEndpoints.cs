@@ -81,7 +81,8 @@ public static class PaymentEndpoints
         });
 
         // 4. PayTR Webhook Callback (Bildirim URL)
-        // PayTR sends POST as application/x-www-form-urlencoded
+        group.MapGet("/paytr-callback", () => Results.Text("OK", "text/plain"));
+
         group.MapPost("/paytr-callback", async (
             HttpRequest request,
             IPaymentGatewayService paymentService,
@@ -92,6 +93,12 @@ public static class PaymentEndpoints
 
             try
             {
+                if (!request.HasFormContentType)
+                {
+                    logger.LogInformation("PayTR Ping/Test received without form data.");
+                    return Results.Text("OK", "text/plain");
+                }
+
                 var form = await request.ReadFormAsync();
                 var merchantOid = form["merchant_oid"].ToString();
                 var status = form["status"].ToString();
@@ -102,6 +109,12 @@ public static class PaymentEndpoints
                 var testMode = form["test_mode"].ToString();
                 var paymentType = form["payment_type"].ToString();
                 var currency = form["currency"].ToString();
+
+                if (string.IsNullOrWhiteSpace(merchantOid))
+                {
+                    logger.LogInformation("PayTR callback received with empty merchant_oid.");
+                    return Results.Text("OK", "text/plain");
+                }
 
                 logger.LogInformation("PayTR Callback Received for Order {OrderNumber}: Status={Status}, Amount={Amount}",
                     merchantOid, status, totalAmount);
@@ -123,7 +136,7 @@ public static class PaymentEndpoints
                 if (!isValidHash)
                 {
                     logger.LogWarning("PayTR Callback invalid hash for order {OrderNumber}", merchantOid);
-                    return Results.BadRequest("PAYTR notification failed: bad hash");
+                    return Results.Text("OK", "text/plain");
                 }
 
                 // 2. Sipariş ve Ödeme Güncellemesi
