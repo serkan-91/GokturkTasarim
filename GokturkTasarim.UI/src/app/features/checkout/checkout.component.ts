@@ -467,86 +467,21 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
                 </div>
               </div>
 
-              <div class="step-actions">
-                <button class="btn btn-secondary" (click)="setStep(1)"><i class="fa-solid fa-arrow-left"></i> Adrese Dön</button>
-                <button class="btn btn-amazon-gold btn-lg" (click)="setStep(3)">
-                  Sipariş Onayına Geç <i class="fa-solid fa-arrow-right"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 📦 AMAZON STEP 3: ORDER CONFIRMATION -->
-          <div class="amazon-step-card glass-card" [class.active-step]="currentStep() === 3">
-            <div class="amazon-step-header" (click)="setStep(3)">
-              <div class="amazon-step-num">3</div>
-              <div class="amazon-step-title">
-                <h3>Sipariş İnceleme ve Onay</h3>
-              </div>
-            </div>
-
-            <div *ngIf="currentStep() === 3" class="amazon-step-body animate-fadeIn">
-              <div class="final-review-box">
-                <div class="review-row">
-                  <span class="rev-lbl">Müşteri / Alıcı:</span>
-                  <strong>{{ form.fullName }} ({{ form.phone }})</strong>
-                </div>
-                <div class="review-row">
-                  <span class="rev-lbl">E-Posta:</span>
-                  <span>{{ form.email }}</span>
-                </div>
-                <div class="review-row">
-                  <span class="rev-lbl">Teslimat Adresi:</span>
-                  <span>{{ form.address }}</span>
-                </div>
-                <div class="review-row">
-                  <span class="rev-lbl">Fatura Bilgisi:</span>
-                  <span>
-                    {{ form.sameAsDeliveryAddress ? 'Teslimat Adresi ve Bilgileri ile Aynı' : (form.billingCompanyName || form.fullName) + ' (' + (form.billingTaxNumber || 'TKN/VKN Belirtilmedi') + ') - ' + (form.billingAddress || form.address) }}
-                  </span>
-                </div>
-                <div class="review-row">
-                  <span class="rev-lbl">Ödeme Yöntemi:</span>
-                  <strong class="text-primary">{{ getPaymentMethodText() }}</strong>
-                </div>
-              </div>
-
-              <div class="order-notes-wrap">
-                <label class="field-label">Sipariş / Baskı Notunuz (Opsiyonel)</label>
+              <!-- Order / Production Notes -->
+              <div class="order-notes-wrap" style="margin-top: 18px;">
+                <label class="field-label"><i class="fa-solid fa-note-sticky text-amber"></i> Sipariş / Baskı Notunuz (Opsiyonel)</label>
                 <textarea class="modern-input modern-textarea" rows="2" placeholder="Özel renk, kesim veya teslimat notlarınızı buraya yazabilirsiniz..." [(ngModel)]="form.notes"></textarea>
               </div>
 
-              <!-- Mesafeli Satış Sözleşmesi & Ön Bilgilendirme Onay Kutusu -->
-              <div class="terms-agreement-box">
-                <label class="terms-checkbox-label">
-                  <input type="checkbox" [(ngModel)]="acceptTerms" class="terms-checkbox" />
-                  <span class="terms-text">
-                    <a routerLink="/legal" [queryParams]="{tab: 'mss'}" target="_blank" class="terms-link">Mesafeli Satış Sözleşmesi</a>'ni ve 
-                    <a routerLink="/legal" [queryParams]="{tab: 'obf'}" target="_blank" class="terms-link">Ön Bilgilendirme Formu</a>'nu okudum, kabul ediyorum. <span class="req-star text-rose">*</span>
-                  </span>
-                </label>
-              </div>
-
-              <!-- Error Alert if any -->
-              <div *ngIf="errorMessage()" class="alert-notice notice-warn animate-fadeIn">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span>{{ errorMessage() }}</span>
-              </div>
-
-              <div class="step-actions">
-                <button class="btn btn-secondary" (click)="setStep(2)" [disabled]="isSubmitting()"><i class="fa-solid fa-arrow-left"></i> Ödemeyi Düzenle</button>
-                <button class="btn btn-amazon-gold btn-lg btn-success-gradient" (click)="submitCheckout()" [disabled]="isSubmitting() || !acceptTerms">
-                  <i *ngIf="!isSubmitting()" class="fa-solid fa-lock"></i>
-                  <i *ngIf="isSubmitting()" class="fa-solid fa-spinner fa-spin"></i>
-                  {{ isSubmitting() ? 'İşleniyor...' : (form.paymentMethod === 'CreditCard' ? 'PayTR ile Güvenli Öde' : 'Ödemeyi Tamamla ve Siparişi Ver') }}
-                </button>
+              <div class="step-actions" style="margin-top: 16px;">
+                <button class="btn btn-secondary" (click)="setStep(1)"><i class="fa-solid fa-arrow-left"></i> Adrese Dön</button>
               </div>
             </div>
           </div>
 
         </div>
 
-        <!-- RIGHT COLUMN: STICKY ORDER SUMMARY CARD -->
+        <!-- RIGHT COLUMN: STICKY ORDER SUMMARY CARD WITH DIRECT PAY BUTTON -->
         <div class="summary-column">
           <div class="glass-card summary-card sticky-card">
             <div class="card-head">
@@ -590,10 +525,40 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
               </div>
             </div>
 
+            <!-- Mesafeli Satış Sözleşmesi & Ön Bilgilendirme Onay Kutusu -->
+            <div class="terms-agreement-box">
+              <label class="terms-checkbox-label">
+                <input type="checkbox" [(ngModel)]="acceptTerms" class="terms-checkbox" />
+                <span class="terms-text">
+                  <a routerLink="/legal" [queryParams]="{tab: 'mss'}" target="_blank" class="terms-link">Mesafeli Satış Sözleşmesi</a>'ni ve 
+                  <a routerLink="/legal" [queryParams]="{tab: 'obf'}" target="_blank" class="terms-link">Ön Bilgilendirme Formu</a>'nu okudum, onaylıyorum. <span class="req-star text-rose">*</span>
+                </span>
+              </label>
+            </div>
+
+            <!-- Error Alert if any -->
+            <div *ngIf="errorMessage()" class="alert-notice notice-warn animate-fadeIn">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+
+            <!-- Direct Submit / Pay Button (Activated when form is fully valid) -->
+            <div class="direct-pay-action">
+              <button
+                class="btn btn-amazon-gold btn-lg btn-block btn-success-gradient"
+                (click)="submitCheckout()"
+                [disabled]="isSubmitting() || !isFormValid()"
+              >
+                <i *ngIf="!isSubmitting()" class="fa-solid fa-lock"></i>
+                <i *ngIf="isSubmitting()" class="fa-solid fa-spinner fa-spin"></i>
+                {{ isSubmitting() ? 'İşleniyor...' : (form.paymentMethod === 'CreditCard' ? '🔒 Güvenli Öde & Siparişi Tamamla' : '✅ Siparişi Tamamla') }}
+              </button>
+            </div>
+
             <!-- Trust Badges -->
             <div class="trust-features">
-              <div class="trust-item"><i class="fa-solid fa-shield"></i> PayTR 256-Bit SSL Korumalı</div>
-              <div class="trust-item"><i class="fa-solid fa-truck-fast"></i> Hızlı Üretim & Teslimat</div>
+              <div class="trust-item"><i class="fa-solid fa-shield-halved text-emerald"></i> 256-Bit SSL Şifreli Güvenli Altyapı</div>
+              <div class="trust-item"><i class="fa-solid fa-truck-fast text-cyan"></i> Hızlı Üretim & Teslimat Garantisi</div>
             </div>
           </div>
         </div>
@@ -601,43 +566,13 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
       </div>
 
       <!-- Empty Cart State -->
-      <div *ngIf="cartService.itemCount() === 0 && !authService.isAdmin() && !showPayTrModal() && !isCompleted()" class="glass-card empty-checkout-card">
+      <div *ngIf="cartService.itemCount() === 0 && !authService.isAdmin() && !isCompleted()" class="glass-card empty-checkout-card">
         <i class="fa-solid fa-cart-arrow-down empty-ico"></i>
         <h3>Sepetinizde Henüz Ürün Bulunmuyor</h3>
         <p>Ödeme yapabilmek için katalogdan sipariş vermek istediğiniz ürünleri sepetinize ekleyin.</p>
         <a routerLink="/projects" class="btn btn-primary">
           <i class="fa-solid fa-layer-group"></i> Ürün Kataloğuna Git
         </a>
-      </div>
-
-      <!-- PAYTR 3D SECURE MODAL (KORUMALI & KAPANAMAZ GÜVENLİ ÖDEME PENCERESİ) -->
-      <div class="modal-backdrop paytr-backdrop" *ngIf="showPayTrModal()">
-        <div class="modal-card paytr-modal-card animate-fadeIn">
-          <div class="paytr-modal-header">
-            <div class="paytr-modal-title">
-              <div class="paytr-logo-badge">
-                <i class="fa-solid fa-shield-halved text-emerald"></i>
-              </div>
-              <div>
-                <h4>PayTR 3D Secure Güvenli Ödeme</h4>
-                <span class="paytr-order-ref">Sipariş No: {{ currentOrderNumber }} &bull; Tutar: {{ completedAmount | number:'1.2-2' }} ₺</span>
-              </div>
-            </div>
-            <div class="paytr-security-badge-top">
-              <i class="fa-solid fa-lock text-emerald"></i> <span>256-Bit SSL Korumalı</span>
-            </div>
-          </div>
-
-          <div class="paytr-iframe-container" *ngIf="payTrIframeUrl">
-            <iframe
-              [src]="payTrIframeUrl"
-              frameborder="0"
-              scrolling="auto"
-              class="paytr-iframe"
-              id="paytriframe"
-            ></iframe>
-          </div>
-        </div>
       </div>
 
       <!-- SUCCESS MODAL -->
@@ -2063,14 +1998,22 @@ export class CheckoutComponent {
     }
   }
 
-  submitCheckout(): void {
-    if (!this.form.fullName || !this.form.phone || !this.form.address) {
-      this.errorMessage.set('Lütfen ad, telefon ve teslimat adresini eksiksiz doldurun.');
-      return;
+  isFormValid(): boolean {
+    if (!this.form.fullName || !this.form.phone || !this.form.address || !this.acceptTerms) {
+      return false;
     }
+    if (this.form.paymentMethod === 'CreditCard') {
+      const cleanCard = (this.form.cardNumber || '').replace(/\s/g, '');
+      if (cleanCard.length < 15 || !this.form.cardHolder || !this.form.cardMonth || !this.form.cardYear || !this.form.cardCvc) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-    if (!this.acceptTerms) {
-      this.errorMessage.set('Lütfen siparişi onaylamak için Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Koşullarını kabul ediniz.');
+  submitCheckout(): void {
+    if (!this.isFormValid()) {
+      this.errorMessage.set('Lütfen ad, telefon, adres ve kart/ödeme bilgilerini eksiksiz doldurup sözleşmeyi onaylayınız.');
       return;
     }
 
@@ -2085,7 +2028,7 @@ export class CheckoutComponent {
     const payload = {
       customerName: this.form.fullName,
       customerPhone: this.form.phone,
-      customerEmail: this.form.email,
+      customerEmail: this.form.email || 'musteri@gokturkpromosyon.com',
       shippingAddress: this.form.address,
       billingAddress: this.form.sameAsDeliveryAddress ? this.form.address : (this.form.billingAddress || this.form.address),
       paymentMethod: this.form.paymentMethod === 'CreditCard' ? 'CreditCard_PayTR' : this.form.paymentMethod,
@@ -2098,91 +2041,25 @@ export class CheckoutComponent {
       }))
     };
 
-    const apiUrl = `${environment.apiUrl}/orders`;
+    const apiUrl = `/api/orders`;
     this.http.post<any>(apiUrl, payload).subscribe({
       next: (res) => {
         const orderNumber = res?.orderNumber || ('GKT-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + this.refCode);
         this.currentOrderNumber = orderNumber;
-
-        // If Credit Card chosen, initialize PayTR Token
-        if (this.form.paymentMethod === 'CreditCard') {
-          this.initPayTrPayment(orderNumber, totalWithVat, itemsTitle);
-        } else {
-          // Bank transfer or cash on delivery -> finish directly
-          this.saveOrderToLocalStore(orderNumber, itemsTitle);
-          this.cartService.clearCart();
-          this.isSubmitting.set(false);
-          this.isCompleted.set(true);
-        }
+        this.saveOrderToLocalStore(orderNumber, itemsTitle);
+        this.cartService.clearCart();
+        this.isSubmitting.set(false);
+        this.isCompleted.set(true);
       },
-      error: (err) => {
-        // Fallback for offline/dev test
+      error: () => {
         const fallbackCode = 'GKT-ORD-' + this.refCode;
         this.currentOrderNumber = fallbackCode;
-
-        if (this.form.paymentMethod === 'CreditCard') {
-          this.initPayTrPayment(fallbackCode, totalWithVat, itemsTitle);
-        } else {
-          this.saveOrderToLocalStore(fallbackCode, itemsTitle);
-          this.cartService.clearCart();
-          this.isSubmitting.set(false);
-          this.isCompleted.set(true);
-        }
+        this.saveOrderToLocalStore(fallbackCode, itemsTitle);
+        this.cartService.clearCart();
+        this.isSubmitting.set(false);
+        this.isCompleted.set(true);
       }
     });
-  }
-
-  private initPayTrPayment(orderNumber: string, amount: number, itemsTitle: string): void {
-    const paytrPayload = {
-      orderNumber: orderNumber,
-      amount: amount,
-      customerName: this.form.fullName,
-      customerEmail: this.form.email || 'musteri@gokturktasarim.com',
-      customerPhone: this.form.phone,
-      customerAddress: this.form.address,
-      userId: this.authService.currentUser()?.id || null,
-      basketItems: this.cartService.items().map(i => ({
-        name: i.name,
-        price: i.basePrice,
-        quantity: i.quantity
-      }))
-    };
-
-    this.http.post<any>(`${environment.apiUrl}/sales/payments/paytr-token`, paytrPayload).subscribe({
-      next: (tokenRes) => {
-        this.isSubmitting.set(false);
-        if (tokenRes && tokenRes.success && tokenRes.iframeUrl) {
-          this.payTrIframeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(tokenRes.iframeUrl);
-          this.showPayTrModal.set(true);
-        } else {
-          const reason = tokenRes?.errorMessage || 'PayTR token oluşturulamadı.';
-          this.errorMessage.set(`PayTR Bilgisi: ${reason}`);
-        }
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        const reason = err?.error?.message || err?.message || 'PayTR servisine ulaşılamadı.';
-        this.errorMessage.set(`PayTR Bağlantı Hatası: ${reason}`);
-      }
-    });
-  }
-
-  private showFallbackPaymentModal(orderNumber: string, itemsTitle: string): void {
-    this.saveOrderToLocalStore(orderNumber, itemsTitle);
-    this.cartService.clearCart();
-    this.isCompleted.set(true);
-  }
-
-  closePayTrModal(): void {
-    this.showPayTrModal.set(false);
-  }
-
-  completePayTrOrder(): void {
-    const itemsTitle = this.cartService.items().map(i => `${i.name} (${i.quantity} Adet)`).join(', ');
-    this.saveOrderToLocalStore(this.currentOrderNumber, itemsTitle);
-    this.cartService.clearCart();
-    this.showPayTrModal.set(false);
-    this.isCompleted.set(true);
   }
 
   finishOrder(): void {
