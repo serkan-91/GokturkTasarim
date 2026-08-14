@@ -68,7 +68,13 @@ public static class PaymentEndpoints
                 clientIp = "127.0.0.1";
             }
 
-            var updatedRequest = request with { UserIp = clientIp };
+            var userId = request.UserId;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            }
+
+            var updatedRequest = request with { UserIp = clientIp, UserId = userId };
             var result = await paymentService.CreatePayTrPaymentTokenAsync(updatedRequest);
 
             return Results.Ok(result);

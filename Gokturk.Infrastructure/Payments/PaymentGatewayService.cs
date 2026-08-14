@@ -179,6 +179,24 @@ public class PaymentGatewayService : IPaymentGatewayService
                 { "debug_on", debugOn }
             };
 
+            // PayTR Card Storage (Kart Saklama) - Attach unique persistent user_token
+            string? userToken = null;
+            if (!string.IsNullOrWhiteSpace(request.UserId))
+            {
+                userToken = "UTOK" + System.Text.RegularExpressions.Regex.Replace(request.UserId, "[^a-zA-Z0-9]", "");
+            }
+            else if (!string.IsNullOrWhiteSpace(email) && !email.Contains("musteri@gokturktasarim.com"))
+            {
+                using var sha = SHA256.Create();
+                var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(email.ToLowerInvariant() + merchantSalt));
+                userToken = "UTOK" + Convert.ToHexString(hash).Substring(0, 24);
+            }
+
+            if (!string.IsNullOrWhiteSpace(userToken))
+            {
+                postData["user_token"] = userToken;
+            }
+
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(20);
 

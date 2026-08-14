@@ -12,7 +12,8 @@ public record CreatePayTrTokenRequestDto(
     string CustomerPhone,
     string CustomerAddress,
     List<PayTrBasketItemDto> BasketItems,
-    string? UserIp = null
+    string? UserIp = null,
+    string? UserId = null
 );
 
 public record PayTrBasketItemDto(

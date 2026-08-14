@@ -1713,6 +1713,7 @@ export class CheckoutComponent {
       customerEmail: this.form.email || 'musteri@gokturktasarim.com',
       customerPhone: this.form.phone,
       customerAddress: this.form.address,
+      userId: this.authService.currentUser()?.id || null,
       basketItems: this.cartService.items().map(i => ({
         name: i.name,
         price: i.basePrice,
