@@ -516,6 +516,17 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
                 <textarea class="modern-input modern-textarea" rows="2" placeholder="Özel renk, kesim veya teslimat notlarınızı buraya yazabilirsiniz..." [(ngModel)]="form.notes"></textarea>
               </div>
 
+              <!-- Mesafeli Satış Sözleşmesi & Ön Bilgilendirme Onay Kutusu -->
+              <div class="terms-agreement-box">
+                <label class="terms-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="acceptTerms" class="terms-checkbox" />
+                  <span class="terms-text">
+                    <a routerLink="/legal" [queryParams]="{tab: 'mss'}" target="_blank" class="terms-link">Mesafeli Satış Sözleşmesi</a>'ni ve 
+                    <a routerLink="/legal" [queryParams]="{tab: 'obf'}" target="_blank" class="terms-link">Ön Bilgilendirme Formu</a>'nu okudum, kabul ediyorum. <span class="req-star text-rose">*</span>
+                  </span>
+                </label>
+              </div>
+
               <!-- Error Alert if any -->
               <div *ngIf="errorMessage()" class="alert-notice notice-warn animate-fadeIn">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -524,7 +535,7 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
 
               <div class="step-actions">
                 <button class="btn btn-secondary" (click)="setStep(2)" [disabled]="isSubmitting()"><i class="fa-solid fa-arrow-left"></i> Ödemeyi Düzenle</button>
-                <button class="btn btn-amazon-gold btn-lg btn-success-gradient" (click)="submitCheckout()" [disabled]="isSubmitting()">
+                <button class="btn btn-amazon-gold btn-lg btn-success-gradient" (click)="submitCheckout()" [disabled]="isSubmitting() || !acceptTerms">
                   <i *ngIf="!isSubmitting()" class="fa-solid fa-lock"></i>
                   <i *ngIf="isSubmitting()" class="fa-solid fa-spinner fa-spin"></i>
                   {{ isSubmitting() ? 'İşleniyor...' : (form.paymentMethod === 'CreditCard' ? 'PayTR ile Güvenli Öde' : 'Ödemeyi Tamamla ve Siparişi Ver') }}
@@ -1444,6 +1455,49 @@ import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.m
       font-size: 0.95rem;
       color: var(--secondary);
     }
+
+    /* ── Terms Agreement Checkbox Box ── */
+    .terms-agreement-box {
+      margin: 18px 0;
+      padding: 14px 18px;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1.5px solid rgba(99, 102, 241, 0.25);
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+    }
+    .terms-agreement-box:hover {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.45);
+    }
+    .terms-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .terms-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .terms-text {
+      font-size: 0.86rem;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    .terms-link {
+      color: var(--cyan);
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s;
+    }
+    .terms-link:hover {
+      color: #fff;
+    }
   `]
 })
 export class CheckoutComponent {
@@ -1458,6 +1512,7 @@ export class CheckoutComponent {
   isSubmitting = signal(false);
   errorMessage = signal<string | null>(null);
   isCardFlipped = signal(false);
+  acceptTerms = false;
 
   showPayTrModal = signal(false);
   payTrIframeUrl: SafeResourceUrl | null = null;
@@ -1666,6 +1721,11 @@ export class CheckoutComponent {
   submitCheckout(): void {
     if (!this.form.fullName || !this.form.phone || !this.form.address) {
       this.errorMessage.set('Lütfen ad, telefon ve teslimat adresini eksiksiz doldurun.');
+      return;
+    }
+
+    if (!this.acceptTerms) {
+      this.errorMessage.set('Lütfen siparişi onaylamak için Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Koşullarını kabul ediniz.');
       return;
     }
 
