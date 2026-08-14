@@ -7,7 +7,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
-import { CustomerOrderDto } from '../../core/models/api-response.model';
+import { CustomerOrderDto, OrderItemDto } from '../../core/models/api-response.model';
 
 @Component({
   selector: 'app-checkout',
@@ -1625,13 +1625,35 @@ export class CheckoutComponent {
   }
 
   saveOrderToLocalStore(orderCode: string, itemsTitle: string): void {
+    const cartItems = this.cartService.items();
+    const orderItems: OrderItemDto[] = cartItems.map(item => ({
+      productId: item.id,
+      productName: item.name,
+      quantity: item.quantity,
+      unitPrice: item.basePrice,
+      totalPrice: item.basePrice * item.quantity,
+      imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400'
+    }));
+
+    const displayTitle = cartItems.length === 0
+      ? (itemsTitle || 'Özel Reklam / Baskı Siparişi')
+      : cartItems.length === 1
+        ? `${cartItems[0].name} (${cartItems[0].quantity} Adet)`
+        : `${cartItems[0].name} (+${cartItems.length - 1} diğer ürün)`;
+
+    const totalWithVat = this.completedAmount || (this.cartService.totalAmount() * 1.20);
+
     const newOrder: CustomerOrderDto = {
       id: orderCode,
-      title: itemsTitle || 'Özel Reklam / Baskı Siparişi',
+      title: displayTitle,
       code: orderCode,
       date: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
       status: this.form.paymentMethod === 'CreditCard' ? 'Ödendi (PayTR)' : 'Onay Bekliyor',
-      statusClass: this.form.paymentMethod === 'CreditCard' ? 'badge-success' : 'badge-warning'
+      statusClass: this.form.paymentMethod === 'CreditCard' ? 'badge-success' : 'badge-warning',
+      totalAmount: totalWithVat,
+      paymentMethod: this.getPaymentMethodText(),
+      shippingAddress: this.form.address,
+      items: orderItems
     };
 
     const currentOrders: CustomerOrderDto[] = JSON.parse(localStorage.getItem('gokturk_orders') || '[]');

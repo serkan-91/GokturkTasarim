@@ -23,6 +23,18 @@ export interface ContactFormRequest {
   message?: string;
 }
 
+export interface OrderItemDto {
+  id?: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice?: number;
+  imageUrl?: string;
+  isReviewed?: boolean;
+  userRating?: number;
+}
+
 export interface CustomerOrderDto {
   id: string;
   title: string;
@@ -30,12 +42,16 @@ export interface CustomerOrderDto {
   date: string;
   status: string;
   statusClass: string;
+  totalAmount?: number;
+  paymentMethod?: string;
+  shippingAddress?: string;
   carrier?: string;
   trackingNumber?: string;
   shippingNote?: string;
   shippedDate?: string;
   cancellationReason?: string;
   cancellationNote?: string;
+  items?: OrderItemDto[];
 }
 
 export interface AdminRequestDto {

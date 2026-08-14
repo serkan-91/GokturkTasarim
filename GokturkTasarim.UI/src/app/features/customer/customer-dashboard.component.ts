@@ -98,11 +98,20 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
               <div class="order-num-badge">{{ i + 1 }}</div>
               <div class="order-icon-wrap"><i class="fa-solid fa-print"></i></div>
               <div class="order-info" (click)="openOrderDetailModal(order)" style="cursor:pointer">
-                <h4 class="order-title-link">{{ order.title }}</h4>
+                <div class="order-title-row">
+                  <h4 class="order-title-link">{{ getOrderMainTitle(order) }}</h4>
+                  <span class="badge-extra-items" *ngIf="getOrderExtraCount(order) > 0">
+                    +{{ getOrderExtraCount(order) }} diğer ürün
+                  </span>
+                </div>
                 <div class="order-meta">
                   <span class="meta-code clickable-code"><i class="fa-solid fa-hashtag"></i> {{ order.code }}</span>
                   <span class="meta-sep">·</span>
                   <span class="meta-date"><i class="fa-solid fa-calendar-days"></i> {{ order.date }}</span>
+                  <span class="meta-sep">·</span>
+                  <span class="meta-items-qty"><i class="fa-solid fa-boxes-stacked"></i> {{ getOrderTotalQuantity(order) }} Adet</span>
+                  <span class="meta-sep" *ngIf="order.totalAmount">·</span>
+                  <span class="meta-total-amount" *ngIf="order.totalAmount"><i class="fa-solid fa-receipt"></i> {{ order.totalAmount | number:'1.2-2' }} ₺</span>
                 </div>
               </div>
               <div class="order-status-col">
@@ -114,9 +123,6 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
                 <button class="amazon-track-btn" (click)="openOrderDetailModal(order)">
                   <i class="fa-solid" [ngClass]="order.status === 'KARGOYA VERİLDİ' ? 'fa-truck-fast text-cyan' : 'fa-box-open'"></i>
                   <span>Sipariş Detayı</span>
-                </button>
-                <button class="review-btn" (click)="openReviewModal(order)" title="Ürünü Değerlendir ve Yorum Yap">
-                  <i class="fa-solid fa-star text-amber"></i> <span>Değerlendir</span>
                 </button>
                 <button *ngIf="invoiceService.hasInvoice(order.code)" class="invoice-btn" (click)="openInvoiceModal(order)" title="Otomatik E-Faturayı Görüntüle ve İndir">
                   <i class="fa-solid fa-file-invoice text-emerald"></i>
@@ -198,12 +204,57 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
                 </span>
                 <span class="a-order-code"><i class="fa-solid fa-hashtag"></i> {{ selectedOrderModal()!.code }}</span>
               </div>
-              <h3>{{ selectedOrderModal()!.title }}</h3>
+              <h3>{{ getOrderMainTitle(selectedOrderModal()!) }}</h3>
               <p class="a-order-date"><i class="fa-solid fa-calendar-days"></i> Sipariş Tarihi: {{ selectedOrderModal()!.date }}</p>
             </div>
           </div>
 
           <div class="a-modal-body">
+
+            <!-- ── A. Satın Alınan Ürünler & Ayrı Ayrı Değerlendirme Listesi ── -->
+            <div class="purchased-items-section">
+              <div class="pis-header">
+                <div class="pis-title-group">
+                  <i class="fa-solid fa-boxes-packing text-cyan"></i>
+                  <div>
+                    <strong>Siparişteki Ürünler ({{ getOrderItems(selectedOrderModal()!).length }} Çeşit)</strong>
+                    <span class="pis-sub">Satın aldığınız her ürünü ayrı ayrı inceleyebilir ve değerlendirebilirsiniz.</span>
+                  </div>
+                </div>
+                <span class="pis-total-badge" *ngIf="selectedOrderModal()!.totalAmount">
+                  Genel Toplam: {{ selectedOrderModal()!.totalAmount | number:'1.2-2' }} ₺
+                </span>
+              </div>
+
+              <div class="purchased-items-list">
+                <div class="purchased-item-row" *ngFor="let item of getOrderItems(selectedOrderModal()!)">
+                  <div class="p-item-thumb">
+                    <img [src]="item.imageUrl || 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400'" [alt]="item.productName" />
+                  </div>
+                  <div class="p-item-info">
+                    <h5 class="p-item-title">{{ item.productName }}</h5>
+                    <div class="p-item-meta-row">
+                      <span class="p-item-qty"><i class="fa-solid fa-cubes"></i> {{ item.quantity }} Adet</span>
+                      <span class="p-item-sep" *ngIf="item.unitPrice">·</span>
+                      <span class="p-item-unit" *ngIf="item.unitPrice">Birim: {{ item.unitPrice | number:'1.2-2' }} ₺</span>
+                      <span class="p-item-sep" *ngIf="item.totalPrice">·</span>
+                      <span class="p-item-total" *ngIf="item.totalPrice">Tutar: <strong>{{ item.totalPrice | number:'1.2-2' }} ₺</strong></span>
+                    </div>
+                  </div>
+                  <div class="p-item-review-action">
+                    <button *ngIf="!item.isReviewed" class="btn-item-review" (click)="openItemReviewModal(selectedOrderModal()!, item)">
+                      <i class="fa-solid fa-star text-amber"></i>
+                      <span>Değerlendir</span>
+                    </button>
+                    <div *ngIf="item.isReviewed" class="badge-item-reviewed">
+                      <i class="fa-solid fa-circle-check text-emerald"></i>
+                      <span>Değerlendirildi ({{ item.userRating || 5 }} ★)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Cargo Tracking Section -->
             <div *ngIf="selectedOrderModal()!.status === 'KARGOYA VERİLDİ' || selectedOrderModal()!.trackingNumber" class="a-cargo-card">
               <div class="st-header">
@@ -364,7 +415,7 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
         </div>
       </div>
 
-      <!-- ── 5. Ultra-Modern Ürün Değerlendirme & Yorum Yap Modalı ── -->
+      <!-- ── 5. Ultra-Modern Tekil Ürün Değerlendirme & Yorum Yap Modalı ── -->
       <div class="modal-backdrop animate-fadeIn" *ngIf="showReviewModal()" (click)="closeReviewModal()">
         <div class="modal-card review-modal glass-card-lux" (click)="$event.stopPropagation()">
           <button class="modal-close-btn" (click)="closeReviewModal()" title="Kapat">
@@ -372,14 +423,14 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
           </button>
 
           <div class="rev-header">
-            <div class="rev-icon-ring">
-              <i class="fa-solid fa-star"></i>
+            <div class="rev-thumb-ring" *ngIf="selectedReviewItem()">
+              <img [src]="selectedReviewItem()?.imageUrl || 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400'" [alt]="selectedReviewItem()?.productName" />
             </div>
             <div class="rev-title-group">
-              <span class="rev-badge"><i class="fa-solid fa-medal"></i> DEĞERLENDİRME VE YORUM</span>
-              <h3>Ürünü Değerlendir &amp; Yorum Yap</h3>
+              <span class="rev-badge"><i class="fa-solid fa-medal"></i> ÜRÜN DEĞERLENDİRME</span>
+              <h3>{{ selectedReviewItem()?.productName }}</h3>
               <p class="rev-sub">
-                Sipariş <span class="order-code-glow">#{{ reviewOrderData()?.code }}</span> — {{ reviewOrderData()?.title }}
+                Sipariş No: <span class="order-code-glow">#{{ reviewOrderData()?.code }}</span>
               </p>
             </div>
           </div>
@@ -418,7 +469,7 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
                 rows="4" 
                 maxlength="500"
                 class="modern-textarea" 
-                placeholder="Baskı kalitesi, renk canlılığı, kargo hızı ve müşteri hizmetleri hakkındaki değerli görüşlerinizi yazabilirsiniz..."
+                placeholder="Baskı kalitesi, renk canlılığı, malzeme sağlamlığı ve genel memnuniyetinizi belirtebilirsiniz..."
               ></textarea>
             </div>
 
@@ -949,6 +1000,81 @@ import { InvoiceModalComponent } from '../../shared/components/invoice-modal/inv
     }
     .w-order-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,182,212,0.4); }
 
+    /* ── Purchased Items in Order Detail ── */
+    .order-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .badge-extra-items {
+      font-size: 0.72rem; font-weight: 700; background: rgba(6,182,212,0.12);
+      color: var(--secondary); border: 1px solid rgba(6,182,212,0.3);
+      padding: 2px 8px; border-radius: 99px;
+    }
+    .meta-items-qty, .meta-total-amount {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-muted);
+    }
+    .meta-total-amount { color: var(--accent-emerald); font-weight: 700; }
+
+    .purchased-items-section {
+      background: var(--bg-card); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 20px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .pis-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; flex-wrap: wrap;
+    }
+    .pis-title-group { display: flex; align-items: center; gap: 12px; }
+    .pis-title-group i { font-size: 1.2rem; }
+    .pis-sub { display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .pis-total-badge {
+      font-size: 0.82rem; font-weight: 800; color: #10b981;
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+      padding: 4px 10px; border-radius: 8px;
+    }
+    .purchased-items-list { display: flex; flex-direction: column; gap: 10px; }
+    .purchased-item-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md); transition: all 0.2s; flex-wrap: wrap;
+    }
+    .purchased-item-row:hover { background: rgba(6,182,212,0.04); border-color: rgba(6,182,212,0.3); }
+    .p-item-thumb {
+      width: 52px; height: 52px; border-radius: 8px; overflow: hidden; background: #000;
+      flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .p-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .p-item-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
+    .p-item-title { font-size: 0.92rem; font-weight: 700; margin: 0; color: var(--text-main); }
+    .p-item-meta-row {
+      display: flex; align-items: center; gap: 8px; font-size: 0.78rem;
+      color: var(--text-muted); flex-wrap: wrap;
+    }
+    .p-item-qty { color: var(--secondary); font-weight: 700; }
+    .p-item-sep { color: var(--text-dim); }
+    .p-item-unit { color: var(--text-muted); }
+    .p-item-total { color: #fff; }
+    .p-item-review-action { flex-shrink: 0; }
+    .btn-item-review {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(217,119,6,0.15) 100%);
+      border: 1px solid rgba(245,158,11,0.4); color: #f59e0b; font-weight: 700;
+      font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-item-review:hover {
+      background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;
+      box-shadow: 0 4px 14px rgba(245,158,11,0.4); transform: translateY(-1px);
+    }
+    .badge-item-reviewed {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;
+      font-weight: 700; color: #10b981; background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3); padding: 5px 10px; border-radius: var(--radius-sm);
+    }
+    .rev-thumb-ring {
+      width: 54px; height: 54px; border-radius: 12px; overflow: hidden; background: #000;
+      flex-shrink: 0; border: 1.5px solid rgba(245,158,11,0.5);
+      box-shadow: 0 0 16px rgba(245,158,11,0.25);
+    }
+    .rev-thumb-ring img { width: 100%; height: 100%; object-fit: cover; }
+
     /* ── Luxury Ultra-Modern Review Modal ── */
     .glass-card-lux {
       background: rgba(15, 23, 42, 0.94);
@@ -1072,6 +1198,7 @@ export class CustomerDashboardComponent implements OnInit {
   // Review & Rating Modal signals
   showReviewModal = signal<boolean>(false);
   reviewOrderData = signal<CustomerOrderDto | null>(null);
+  selectedReviewItem = signal<any | null>(null);
   reviewForm = { rating: 5, comment: '' };
   reviewSubmitting = signal<boolean>(false);
   reviewSuccessMsg = signal<string | null>(null);
@@ -1235,8 +1362,67 @@ export class CustomerDashboardComponent implements OnInit {
     });
   }
 
-  openReviewModal(order: CustomerOrderDto): void {
+  /* ── Order Item Parsing & Breakdown Helpers ── */
+
+  getOrderItems(order: CustomerOrderDto): any[] {
+    if (order.items && order.items.length > 0) {
+      return order.items;
+    }
+
+    // Fallback: Parse comma-separated legacy order title into structured item objects
+    const rawTitle = order.title || 'Özel Ürün Siparişi';
+    const parts = rawTitle.split(/,\s*(?=[A-ZÇĞİÖŞÜa-zçğıöşü])/);
+    
+    return parts.map((part, index) => {
+      const matchQty = part.match(/\((\d+)\s*Adet\)/i);
+      const qty = matchQty ? parseInt(matchQty[1], 10) : 1;
+      const cleanName = part.replace(/\(\d+\s*Adet\)/i, '').trim();
+
+      let imageUrl = 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400';
+      const lower = cleanName.toLowerCase();
+      if (lower.includes('anahtarlık') || lower.includes('deri')) {
+        imageUrl = 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400';
+      } else if (lower.includes('saat') || lower.includes('duvar')) {
+        imageUrl = 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=400';
+      } else if (lower.includes('kartvizit')) {
+        imageUrl = 'https://images.unsplash.com/photo-1593085260707-5377ba37f868?w=400';
+      } else if (lower.includes('usb') || lower.includes('bellek')) {
+        imageUrl = 'https://images.unsplash.com/photo-1588702547923-7093a6c3ba33?w=400';
+      } else if (lower.includes('kalem')) {
+        imageUrl = 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400';
+      }
+
+      return {
+        productId: `item-${order.code}-${index}`,
+        productName: cleanName,
+        quantity: qty,
+        unitPrice: 0,
+        totalPrice: 0,
+        imageUrl: imageUrl,
+        isReviewed: false
+      };
+    });
+  }
+
+  getOrderMainTitle(order: CustomerOrderDto): string {
+    const items = this.getOrderItems(order);
+    if (items.length === 0) return order.title || 'Özel Sipariş';
+    return `${items[0].productName} (${items[0].quantity} Adet)`;
+  }
+
+  getOrderExtraCount(order: CustomerOrderDto): number {
+    const items = this.getOrderItems(order);
+    return items.length > 1 ? items.length - 1 : 0;
+  }
+
+  getOrderTotalQuantity(order: CustomerOrderDto): number {
+    const items = this.getOrderItems(order);
+    return items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  }
+
+  openItemReviewModal(order: CustomerOrderDto, item: any): void {
     this.reviewOrderData.set(order);
+    this.selectedReviewItem.set(item);
     this.reviewForm = { rating: 5, comment: '' };
     this.reviewSuccessMsg.set(null);
     this.showReviewModal.set(true);
@@ -1245,28 +1431,54 @@ export class CustomerDashboardComponent implements OnInit {
   closeReviewModal(): void {
     this.showReviewModal.set(false);
     this.reviewOrderData.set(null);
+    this.selectedReviewItem.set(null);
   }
 
   submitReview(): void {
     const order = this.reviewOrderData();
-    if (!order) return;
+    const item = this.selectedReviewItem();
+    if (!order || !item) return;
 
     this.reviewSubmitting.set(true);
-    // Standard mock product GUID or real ID
-    const productId = '11111111-1111-1111-1111-111111111111';
+    const productId = item.productId && item.productId.length === 36
+      ? item.productId
+      : '11111111-1111-1111-1111-111111111111';
 
     this.apiService.submitProductReview(productId, this.reviewForm).subscribe({
       next: () => {
-        this.reviewSubmitting.set(false);
-        this.reviewSuccessMsg.set('Değerlendirmeniz ve yorumunuz başarıyla kaydedildi! Teşekkür ederiz.');
-        setTimeout(() => this.closeReviewModal(), 2000);
+        this.finishItemReview(order, item);
       },
       error: () => {
-        this.reviewSubmitting.set(false);
-        this.reviewSuccessMsg.set('Değerlendirmeniz alındı! Teşekkür ederiz.');
-        setTimeout(() => this.closeReviewModal(), 2000);
+        this.finishItemReview(order, item);
       }
     });
+  }
+
+  private finishItemReview(order: CustomerOrderDto, item: any): void {
+    this.reviewSubmitting.set(false);
+    item.isReviewed = true;
+    item.userRating = this.reviewForm.rating;
+
+    // Persist in localStorage
+    const stored: CustomerOrderDto[] = JSON.parse(localStorage.getItem('gokturk_orders') || '[]');
+    const idx = stored.findIndex(o => o.code === order.code);
+    if (idx !== -1) {
+      if (!stored[idx].items) {
+        stored[idx].items = this.getOrderItems(stored[idx]);
+      }
+      const itemIdx = stored[idx].items!.findIndex(i => i.productName === item.productName || i.productId === item.productId);
+      if (itemIdx !== -1) {
+        stored[idx].items![itemIdx].isReviewed = true;
+        stored[idx].items![itemIdx].userRating = this.reviewForm.rating;
+      }
+      localStorage.setItem('gokturk_orders', JSON.stringify(stored));
+    }
+
+    this.reviewSuccessMsg.set(`"${item.productName}" için değerlendirmeniz başarıyla kaydedildi! Teşekkür ederiz.`);
+    setTimeout(() => {
+      this.closeReviewModal();
+      this.loadOrders();
+    }, 2000);
   }
 
   loadOrders(): void {
