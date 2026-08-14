@@ -40,6 +40,15 @@ public static class DbInitializer
             };
 
             await db.Users.AddRangeAsync(adminUser, customerUser);
+            await db.SaveChangesAsync();
+        }
+
+        // Auto-verify serkann.091@gmail.com if already registered
+        var serkanUser = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "serkann.091@gmail.com");
+        if (serkanUser != null && !serkanUser.IsEmailVerified)
+        {
+            serkanUser.IsEmailVerified = true;
+            await db.SaveChangesAsync();
         }
 
         // 2. Seed Default Categories if empty

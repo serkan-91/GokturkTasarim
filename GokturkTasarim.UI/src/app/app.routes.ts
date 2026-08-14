@@ -11,6 +11,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent),
     canActivate: [guestGuard]
   },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
 
   // Main Shell Application Routes
   {

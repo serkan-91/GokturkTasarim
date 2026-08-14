@@ -296,21 +296,39 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Token zorunludur." });
 
         var verificationToken = await _db.EmailVerificationTokens
-            .FirstOrDefaultAsync(v => v.Token == token && !v.IsUsed && v.ExpiresAt > DateTime.UtcNow);
+            .FirstOrDefaultAsync(v => v.Token == token);
 
         if (verificationToken == null)
-            return BadRequest(new { message = "Geçersiz veya süresi dolmuş doğrulama bağlantısı." });
+            return BadRequest(new { message = "Geçersiz doğrulama bağlantısı." });
+
+        var user = await _db.Users.FindAsync(verificationToken.UserId);
+
+        if (verificationToken.IsUsed || (user != null && user.IsEmailVerified))
+        {
+            if (user != null && !user.IsEmailVerified)
+            {
+                user.IsEmailVerified = true;
+                user.MarkAsUpdated();
+                await _db.SaveChangesAsync();
+            }
+            return Ok(new { message = "E-posta adresiniz daha önce doğrulanmıştır. Giriş yapabilirsiniz." });
+        }
+
+        if (verificationToken.ExpiresAt <= DateTime.UtcNow)
+        {
+            return BadRequest(new { message = "Doğrulama bağlantısının süresi dolmuş. Lütfen giriş ekranından tekrar onay e-postası isteyiniz." });
+        }
 
         verificationToken.IsUsed = true;
-        var user = await _db.Users.FindAsync(verificationToken.UserId);
         if (user != null)
         {
             user.IsEmailVerified = true;
+            user.MarkAsUpdated();
         }
 
         await _db.SaveChangesAsync();
 
-        return Ok(new { message = "E-posta adresiniz başarıyla doğrulandı!" });
+        return Ok(new { message = "E-posta adresiniz başarıyla doğrulandı! Şimdi giriş yapabilirsiniz." });
     }
 
     private void SetAuthCookies(string accessToken, DateTime accessExpiresAt, string refreshToken, DateTime refreshExpiresAt)
